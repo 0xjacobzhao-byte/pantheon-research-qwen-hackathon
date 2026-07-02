@@ -133,16 +133,21 @@ See [docs/qwen_integration.md](docs/qwen_integration.md) for details.
 The `/api/proof/alibaba-cloud` endpoint returns deployment metadata as a
 secret-free proof. Credentials are reported as **booleans only**, and the
 endpoint makes **no external calls** — so it never claims connectivity it did
-not verify. This repo's backend serves the richer **v2** shape (with the
-`database{}` block below, `alibaba_hosted`, `safe_claims`, `non_claims`); the
-**live ECS box currently serves the compatible v1 shape** (same underlying
-facts) — see [docs/live_proof.md](docs/live_proof.md#1-public-safe-deployment-proof-no-auth-no-secrets)
-for the exact live response and the tracked v2-alignment step.
+not verify. Both this repo's backend and the **live ECS box** now serve the
+**v2** shape (`schema_version: alibaba-proof-v2`, the `database{}` block below,
+`alibaba_hosted`, `safe_claims`, `non_claims`) — see
+[docs/live_proof.md](docs/live_proof.md#1-public-safe-deployment-proof-no-auth-no-secrets)
+for the captured live response.
 
 ### Database claim (precise — no overclaiming)
 
 RDS **provisioning** is kept distinct from full production-data **migration**.
-The `database{}` block below is the **v2** shape served by this repo's backend:
+On the live Alibaba ECS box, RDS is **deployed and connected as a selected
+evidence mirror** (`mirror_state: partial_selected_mirror`); **full
+production-data migration is not claimed** (`production_data_migrated: false`,
+`full_production_clone_verified: false`). The `database{}` block below is the
+**v2** shape served by *this* repo's offline backend, which performs no probe
+(so `connected: null`):
 
 ```json
 "database": {

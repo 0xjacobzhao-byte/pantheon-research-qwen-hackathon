@@ -26,10 +26,10 @@ The distinction that matters for judges:
 
 | Question | State | How it's known |
 | --- | --- | --- |
-| RDS **provisioned/deployed**? | Reported deployed by the operator | Operator assertion; an Alibaba RDS PostgreSQL-compatible instance is part of the Alibaba Cloud architecture |
-| RDS **configured** on the ECS box? | `database_url_configured: true` | Live proof boolean (a DB URL is set; the boolean alone does not name the engine) |
-| RDS **connected** (live read path)? | Verification **pending** | Requires a safe connectivity probe — see post-submission proof alignment below |
-| Full production data **migrated** to RDS? | **Not claimed** | Would require row-count + API read-path proof; not asserted |
+| RDS **provisioned/deployed**? | **Yes** | An Alibaba RDS PostgreSQL-compatible instance is part of the Alibaba Cloud architecture |
+| RDS **configured** on the ECS box? | `database.configured: true` | Live proof boolean (a DB URL is set; never the value) |
+| RDS **connected** (live read path)? | **Yes — selected evidence mirror** | Live v2 proof `database.connected: true`, `role: "selected evidence mirror"`, `mirror_state: "partial_selected_mirror"` (operator-attested session; the public offline demo endpoint performs no probe and reports `connected: null`) |
+| Full production data **migrated** to RDS? | **Not claimed** | `production_data_migrated: false`, `full_production_clone_verified: false` — would require core-table row-count + API read-path proof; not asserted |
 
 The production data platform (1,300+ equity overlays) currently lives in
 **Railway Postgres**; the rich DeepSeek-vs-Qwen **comparison data** is served
@@ -37,11 +37,12 @@ from there (via Vercel/Railway). The Alibaba box's proven role today is the
 **live-hosted backend + live Qwen call**. RDS provisioning is **not** conflated
 with full production-data migration.
 
-> **Post-submission proof alignment (pending).** The live proof endpoint is being
-> upgraded to the v2 shape (host-honest fields + an explicit `database{}` block
-> with `connected`, `role`, and `production_data_migrated`). Live RDS role /
-> connection verification is pending that alignment. This repo will not claim
-> migration without row-count and read-path proof.
+> **Proof v2 (live).** The live proof endpoint serves the v2 shape (host-honest
+> fields + an explicit `database{}` block with `connected`, `role`,
+> `mirror_state`, `production_data_migrated`, `full_production_clone_verified`).
+> RDS is deployed and connected as a **selected evidence mirror**; full
+> production-data migration is **not** claimed without core-table row counts and
+> API read-path proof.
 
 The public offline demo needs **no database** at all — it runs on bundled samples.
 

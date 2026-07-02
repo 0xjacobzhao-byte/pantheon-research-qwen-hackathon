@@ -20,23 +20,43 @@ deployment** so judges can verify the integration end-to-end, not just read code
 curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
 ```
 
-Live response (captured 2026-07-02, values are booleans only — never secrets):
+Live response (`alibaba-proof-v2`, values are booleans/descriptors only — never
+secrets). Abridged; the full captured payload is committed at
+[`docs/assets/alibaba_live_proof.json`](assets/alibaba_live_proof.json):
 
 ```json
 {
+  "schema_version": "alibaba-proof-v2",
   "project": "Pantheon Research",
   "status": "ok",
   "cloud_provider": "Alibaba Cloud",
-  "ai_platform": "Alibaba Cloud Model Studio / Qwen",
-  "runtime": "Alibaba Cloud ECS",
-  "region": "ap-southeast-1",
+  "qwen_provider": "Alibaba Cloud Model Studio / DashScope",
+  "host_runtime": "Alibaba Cloud ECS",
+  "alibaba_hosted": true,
+  "backend_runtime": "Dockerized FastAPI",
+  "reverse_proxy": "Nginx",
   "qwen_model": "qwen3.7-plus",
   "qwen_configured": true,
   "dashscope_api_key_configured": true,
   "database_url_configured": true,
-  "timestamp_utc": "2026-07-02T11:56:14Z"
+  "database": {
+    "provider": "Alibaba RDS PostgreSQL-compatible",
+    "configured": true,
+    "connected": true,
+    "role": "selected evidence mirror",
+    "mirror_state": "partial_selected_mirror",
+    "production_data_migrated": false,
+    "full_production_clone_verified": false,
+    "note": "Alibaba RDS is deployed and connected as a selected evidence mirror. Full production-data migration is not claimed without core table row counts and API read-path verification."
+  },
+  "timestamp_utc": "2026-07-02T22:50:30Z"
 }
 ```
+
+On the live ECS box the RDS block reports `connected: true` (an operator-attested
+session). The public offline backend in *this* repo makes no probe, so its own
+`/api/proof/alibaba-cloud` reports `connected: null` — both are honest about what
+they actually verified.
 
 `runtime` reports the **actual** host (`Alibaba Cloud ECS`). In the private
 production repo the same endpoint is environment-aware: on Railway it reports
@@ -45,19 +65,23 @@ pretends to be hosted somewhere it is not. The Qwen **AI provider** is Alibaba
 Cloud Model Studio (DashScope) on every host.
 
 `database_url_configured: true` is a **boolean signal only** — a database URL is
-set on the box. It does **not**, by itself, name the engine or assert that
-production data has been migrated. See
-[`alibaba_deployment_parity.md`](alibaba_deployment_parity.md) for the precise
-RDS provisioning-vs-migration breakdown.
+set on the box. The `database{}` block is precise: RDS is a **selected evidence
+mirror** (`mirror_state: partial_selected_mirror`), not a full production clone.
+`production_data_migrated` and `full_production_clone_verified` are both **false**
+— migration is not claimed without core-table row counts and API read-path
+verification. See [`alibaba_deployment_parity.md`](alibaba_deployment_parity.md)
+for the full provisioning-vs-migration breakdown.
 
-> **Proof v2 alignment (post-submission, in progress).** This public repo's own
-> backend already serves the richer **v2** proof shape
+> **Proof v2 (live).** Both the live ECS box and this repo's backend serve the
+> **v2** proof shape
 > ([`backend/app/alibaba_cloud_proof.py`](../backend/app/alibaba_cloud_proof.py)):
 > `schema_version`, `alibaba_hosted`, a structured `database{}` block
-> (`connected`, `role`, `production_data_migrated`), `safe_claims`, and
-> `non_claims`. The live ECS box currently serves the compatible v1 shape above
-> (same underlying facts); redeploying it to v2 and verifying the live RDS role
-> is tracked as post-submission proof alignment.
+> (`connected`, `role`, `mirror_state`, `production_data_migrated`,
+> `full_production_clone_verified`), `safe_claims`, and `non_claims`. The private
+> production backend that runs on the box was source-controlled so a rebuild
+> preserves the honest v2 wording; the safer RDS semantics
+> (`production_data_migrated: false`, selected evidence mirror) are the source of
+> truth.
 
 ## 2. Live Qwen call (admin-gated smoke test)
 
