@@ -44,6 +44,21 @@ production repo the same endpoint is environment-aware: on Railway it reports
 pretends to be hosted somewhere it is not. The Qwen **AI provider** is Alibaba
 Cloud Model Studio (DashScope) on every host.
 
+`database_url_configured: true` is a **boolean signal only** — a database URL is
+set on the box. It does **not**, by itself, name the engine or assert that
+production data has been migrated. See
+[`alibaba_deployment_parity.md`](alibaba_deployment_parity.md) for the precise
+RDS provisioning-vs-migration breakdown.
+
+> **Proof v2 alignment (post-submission, in progress).** This public repo's own
+> backend already serves the richer **v2** proof shape
+> ([`backend/app/alibaba_cloud_proof.py`](../backend/app/alibaba_cloud_proof.py)):
+> `schema_version`, `alibaba_hosted`, a structured `database{}` block
+> (`connected`, `role`, `production_data_migrated`), `safe_claims`, and
+> `non_claims`. The live ECS box currently serves the compatible v1 shape above
+> (same underlying facts); redeploying it to v2 and verifying the live RDS role
+> is tracked as post-submission proof alignment.
+
 ## 2. Live Qwen call (admin-gated smoke test)
 
 The smoke endpoint performs a **real** Qwen chat-completion via Alibaba Cloud

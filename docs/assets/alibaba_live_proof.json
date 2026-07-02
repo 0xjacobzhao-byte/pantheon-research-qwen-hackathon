@@ -1,0 +1,13 @@
+{
+    "project": "Pantheon Research",
+    "status": "ok",
+    "cloud_provider": "Alibaba Cloud",
+    "ai_platform": "Alibaba Cloud Model Studio / Qwen",
+    "runtime": "Alibaba Cloud ECS",
+    "region": "ap-southeast-1",
+    "qwen_model": "qwen3.7-plus",
+    "qwen_configured": true,
+    "dashscope_api_key_configured": true,
+    "database_url_configured": true,
+    "timestamp_utc": "2026-07-02T17:50:44.305039+00:00"
+}

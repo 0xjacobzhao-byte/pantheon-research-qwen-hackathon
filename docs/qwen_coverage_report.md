@@ -1,10 +1,21 @@
 # Qwen Coverage Report
 
-> Status: **public-demo numbers verified; production backfill figures intentionally not published.**
+> **Coverage state: WITHHELD (production) · VERIFIED (public demo).**
+> Full production universe counts are withheld from the public repo. The repo
+> demonstrates the mechanism with bundled redacted traces and sample evidence
+> packs. No private DB URLs, no provider secrets, no raw universe dump.
 
-This report covers **only** the sanitized public demo. Production universe
+**Purpose:** measure coverage of the Qwen-vs-DeepSeek qualitative-overlay
+comparison — how many tickers have both a Qwen and a DeepSeek overlay so they
+can be compared with agreement/divergence scoring.
+
+**Product demo tickers** (seen live on `pantheon-research.com` / `8.222.191.152`,
+Ticker Profile → Qwen vs DeepSeek): `NVDA`, `0700.HK` (Tencent),
+`9988.HK` (Alibaba). **Public-repo bundled demo tickers:** `MA`, `NVDA`.
+
+This report covers **only** the sanitized public demo below. Production universe
 sizes, refresh cadence, and cost figures live in the private repo and are not
-published here (no private DB URLs, no proprietary universe counts).
+published here.
 
 ## Public demo — verified
 
@@ -39,13 +50,16 @@ universe counts is out of scope for this sanitized repo.
 | Healthy comparisons | 2 | _pending / private_ |
 | Errors | 0 | _pending / private_ |
 | Cost | $0 (offline) | _pending / private_ |
-| Model | `qwen-plus` / `deepseek-chat` | premium tiers (private) |
+| Model | `qwen-plus` / `deepseek-chat` | `qwen3.7-plus` / DeepSeek (private) |
 | Demo tickers | `MA`, `NVDA` | full universe (private) |
+| Cost estimate | $0 (offline) | withheld (redacted range) |
 
 ## Notes
 
-- The public demo uses `qwen-plus` as a safe default; the production system
-  routes premium Qwen tiers via a private model registry.
+- The public demo uses `qwen-plus` as a safe default; the live Alibaba deployment
+  reports `qwen_model: "qwen3.7-plus"` (a reasoning-class Qwen model) — verify at
+  `GET http://8.222.191.152/api/proof/alibaba-cloud`.
+- The production system routes premium Qwen tiers via a private model registry.
 - A redacted coverage summary is committed at
   [`data/redacted_traces/coverage_summary_redacted.json`](../data/redacted_traces/coverage_summary_redacted.json).
 - No performance/alpha is claimed — see

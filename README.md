@@ -6,6 +6,20 @@ A sanitized, judge-facing vertical slice of the private Pantheon Research
 production system — cloud deployment, data governance, dual-model comparison,
 and product-grade UI. Not an API wrapper.
 
+## Submission
+
+| | Link |
+|---|---|
+| 🌐 **Live product** | https://pantheon-research.com |
+| ☁️ **Alibaba Cloud deployment** | http://8.222.191.152 |
+| 🎬 **Demo video** | https://www.youtube.com/watch?v=68lceOACLKo |
+| 🖼️ **Deck** | [Google Slides](https://docs.google.com/presentation/d/1E72ORBmaiL2QPbmL1CPBqrbSLLOsAVEnDxdo76IPJqs/edit?usp=sharing) |
+| 💻 **Public code** | https://github.com/0xjacobzhao-byte/pantheon-research-qwen-hackathon |
+
+> The **live product** (`pantheon-research.com`) and the **Alibaba deployment**
+> (`8.222.191.152`) run the full private production system. **This repository** is
+> the sanitized, self-contained slice judges can clone and run in minutes.
+
 ## Judge Quickstart
 
 ```bash
@@ -47,6 +61,24 @@ curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
   human-review gate.
 - **Qwen is called live** through Alibaba DashScope when live mode is enabled;
   **offline mode** works fully with bundled samples and no credentials.
+
+## Why this is not just an LLM wrapper
+
+| Capability | Where |
+|------------|-------|
+| **Fail-closed model states** — missing key → `BLOCKED_BY_MISSING_CREDENTIAL`, bad JSON → `PARSE_ERROR`, missing sample → `QWEN_NOT_GENERATED`; never a hollow `SUCCESS` | [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py) · [`models.py`](backend/app/models.py) |
+| **Evidence hashing / provenance** — every evidence pack is committed to a `sha256` content hash and threaded into each comparison | [`backend/app/evidence_pack.py`](backend/app/evidence_pack.py) |
+| **Qwen-vs-DeepSeek agreement & divergence** — two independent models, per-field divergence, agreement scoring, `data_state` (`LIVE_DUAL`/`OFFLINE_SAMPLE`/`MIXED`/`PARTIAL`/`BLOCKED`) | [`backend/app/comparison.py`](backend/app/comparison.py) |
+| **Human-review gate** — low agreement or a major divergence flags `human_review_required`; a fail-closed side yields `NOT_COMPARABLE` (no fabricated score) | [`comparison.py`](backend/app/comparison.py) · [`OverlayComparisonPanel.tsx`](frontend/src/components/equity/OverlayComparisonPanel.tsx) |
+| **Data-quality / Research-Ops panel** — governance snapshot: provider config, coverage, per-ticker state | [`backend/app/data_quality.py`](backend/app/data_quality.py) · [`DataQualityPanel.tsx`](frontend/src/components/DataQualityPanel.tsx) |
+| **Validation methodology** — the overlay is a tracked signal, not an alpha oracle; forward validation required before any performance claim | [docs/validation_methodology.md](docs/validation_methodology.md) |
+| **Alibaba live deployment proof** — host-honest proof endpoint + admin-gated live Qwen smoke on a real ECS box | [docs/live_proof.md](docs/live_proof.md) |
+
+## Screenshots & demo
+
+- 🎬 **Video walkthrough:** https://www.youtube.com/watch?v=68lceOACLKo
+- 📄 **Live Alibaba proof (captured JSON):** [`docs/assets/alibaba_live_proof.json`](docs/assets/alibaba_live_proof.json)
+- 🖼️ **UI screenshots:** see [`docs/assets/`](docs/assets/README.md) (capture instructions included)
 
 ## Project Description
 
