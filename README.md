@@ -48,9 +48,11 @@ curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
 | Evidence pack (provenance + hash) | [`backend/app/evidence_pack.py`](backend/app/evidence_pack.py) |
 | Product UI | [`frontend/src/components/equity/OverlayComparisonPanel.tsx`](frontend/src/components/equity/OverlayComparisonPanel.tsx) |
 | Mini Research-Ops / data quality | [`backend/app/data_quality.py`](backend/app/data_quality.py) |
+| System scope — module grid | [`backend/app/sample_modules.py`](backend/app/sample_modules.py) · [docs/module_snapshots.md](docs/module_snapshots.md) |
 | Live proof docs | [docs/live_proof.md](docs/live_proof.md) |
 | Production mapping | [docs/production_architecture_mapping.md](docs/production_architecture_mapping.md) |
 | Judge walkthrough | [docs/judge_walkthrough.md](docs/judge_walkthrough.md) |
+| Safe claims & non-claims | [docs/safe_claims.md](docs/safe_claims.md) |
 | Validation methodology | [docs/validation_methodology.md](docs/validation_methodology.md) |
 
 ### What this repo claims (and does not)
@@ -72,6 +74,7 @@ curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
 | **Human-review gate** — low agreement or a major divergence flags `human_review_required`; a fail-closed side yields `NOT_COMPARABLE` (no fabricated score) | [`comparison.py`](backend/app/comparison.py) · [`OverlayComparisonPanel.tsx`](frontend/src/components/equity/OverlayComparisonPanel.tsx) |
 | **Data-quality / Research-Ops panel** — governance snapshot: provider config, coverage, per-ticker state | [`backend/app/data_quality.py`](backend/app/data_quality.py) · [`DataQualityPanel.tsx`](frontend/src/components/DataQualityPanel.tsx) |
 | **Validation methodology** — the overlay is a tracked signal, not an alpha oracle; forward validation required before any performance claim | [docs/validation_methodology.md](docs/validation_methodology.md) |
+| **Multi-asset system scope** — Macro · TA · FICC (FI/FX/Commodity) · Equity module grid with honest per-module `data_state` / `validation_state` / "what not to infer" | [`backend/app/sample_modules.py`](backend/app/sample_modules.py) · [`ModuleSnapshotGrid.tsx`](frontend/src/components/ModuleSnapshotGrid.tsx) · [docs/module_snapshots.md](docs/module_snapshots.md) |
 | **Alibaba live deployment proof** — host-honest proof endpoint + admin-gated live Qwen smoke on a real ECS box | [docs/live_proof.md](docs/live_proof.md) |
 
 ## Screenshots & demo
@@ -127,14 +130,19 @@ See [docs/qwen_integration.md](docs/qwen_integration.md) for details.
 | Compute Host | Reported **honestly** via `alibaba_hosted` (same image runs on Railway and Alibaba ECS) |
 | Database | See precise claim below |
 
-The `/api/proof/alibaba-cloud` endpoint (v2) returns deployment metadata as a
+The `/api/proof/alibaba-cloud` endpoint returns deployment metadata as a
 secret-free proof. Credentials are reported as **booleans only**, and the
 endpoint makes **no external calls** — so it never claims connectivity it did
-not verify.
+not verify. This repo's backend serves the richer **v2** shape (with the
+`database{}` block below, `alibaba_hosted`, `safe_claims`, `non_claims`); the
+**live ECS box currently serves the compatible v1 shape** (same underlying
+facts) — see [docs/live_proof.md](docs/live_proof.md#1-public-safe-deployment-proof-no-auth-no-secrets)
+for the exact live response and the tracked v2-alignment step.
 
 ### Database claim (precise — no overclaiming)
 
-RDS **provisioning** is kept distinct from full production-data **migration**:
+RDS **provisioning** is kept distinct from full production-data **migration**.
+The `database{}` block below is the **v2** shape served by this repo's backend:
 
 ```json
 "database": {
@@ -249,6 +257,7 @@ docker-compose up --build
 | GET | `/api/overlay/deepseek/{ticker}` | DeepSeek qualitative overlay |
 | GET | `/api/comparison/{ticker}` | Full dual-provider comparison (`data_state`, agreement, review gate) |
 | GET | `/api/data-quality` | Mini Research-Ops / governance snapshot |
+| GET | `/api/modules` | Module snapshot grid — full research-system scope |
 | GET | `/api/validation` | Forward-validation methodology + illustrative summary |
 | GET | `/api/demo-flow` | Demo flow steps |
 | GET | `/api/proof/alibaba-cloud` | Alibaba Cloud deployment proof (v2, canonical) |
