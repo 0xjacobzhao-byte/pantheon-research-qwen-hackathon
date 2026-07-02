@@ -158,6 +158,35 @@ class TestToneClassification:
         })
         assert classify_tone(overlay) == Tone.NEUTRAL
 
+    def test_parse_error_returns_neutral(self):
+        # A PARSE_ERROR overlay is unusable — it must not be scored as a tone.
+        overlay = _make_overlay(status=OverlayStatus.PARSE_ERROR, takeaway="")
+        assert classify_tone(overlay) == Tone.NEUTRAL
+
+
+# ---------------------------------------------------------------------------
+# Parse-failure handling: invalid JSON must surface, never a hollow SUCCESS
+# ---------------------------------------------------------------------------
+
+class TestParseFailure:
+    def test_parse_error_status_exists(self):
+        assert OverlayStatus.PARSE_ERROR.value == "PARSE_ERROR"
+
+    def test_qwen_parser_raises_on_invalid_json(self):
+        from app import qwen_overlay
+        with pytest.raises(ValueError):
+            qwen_overlay._parse_json_response("this is not json at all")
+
+    def test_deepseek_parser_raises_on_invalid_json(self):
+        from app import deepseek_overlay
+        with pytest.raises(ValueError):
+            deepseek_overlay._parse_json_response("<html>nope</html>")
+
+    def test_qwen_parser_still_reads_fenced_json(self):
+        from app import qwen_overlay
+        out = qwen_overlay._parse_json_response('```json\n{"takeaway": "ok"}\n```')
+        assert out["takeaway"] == "ok"
+
 
 # ---------------------------------------------------------------------------
 # Divergence detection tests

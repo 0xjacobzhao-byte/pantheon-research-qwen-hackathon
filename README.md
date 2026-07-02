@@ -50,6 +50,15 @@ See [docs/qwen_integration.md](docs/qwen_integration.md) for details.
 
 The `/api/alibaba/proof` endpoint returns deployment metadata. No real credentials are stored — all configuration is loaded from environment variables.
 
+### Live deployment proof
+
+This code runs on a live Alibaba Cloud ECS box (Nginx → Dockerized FastAPI).
+Judges can verify Qwen is called live from Alibaba Cloud — see
+**[docs/live_proof.md](docs/live_proof.md)** for the endpoint URL, `curl`
+examples, and captured live responses (deployment proof + a real Qwen smoke
+call). A redacted live-call artifact is committed at
+[`data/qwen_live_smoke_sample_redacted.json`](data/qwen_live_smoke_sample_redacted.json).
+
 ## Architecture
 
 ```
@@ -80,7 +89,7 @@ The `/api/alibaba/proof` endpoint returns deployment metadata. No real credentia
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | FastAPI, Python 3.11+ |
+| Backend | FastAPI, Python 3.11–3.12 (pinned `pydantic-core` wheels are not yet published for 3.13+) |
 | Frontend | React 18 + TypeScript + Vite 6 |
 | LLM (Qwen) | Alibaba Cloud DashScope (OpenAI-compatible) |
 | LLM (DeepSeek) | DeepSeek API (OpenAI-compatible) |
@@ -92,7 +101,7 @@ The `/api/alibaba/proof` endpoint returns deployment metadata. No real credentia
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.11–3.12 (pinned `pydantic-core` wheels are not yet published for 3.13+)
 - Node.js 18+
 
 ### Backend

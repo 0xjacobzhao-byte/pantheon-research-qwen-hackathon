@@ -82,8 +82,10 @@ def _parse_json_response(raw: str) -> dict:
         text = "\n".join(lines)
     try:
         return json.loads(text)
-    except json.JSONDecodeError:
-        return {}
+    except json.JSONDecodeError as exc:
+        # Signal the failure instead of masking it as an empty dict — the caller
+        # turns this into an explicit PARSE_ERROR overlay, never a hollow SUCCESS.
+        raise ValueError(str(exc)) from exc
 
 
 async def run_deepseek_overlay(
@@ -124,7 +126,20 @@ async def run_deepseek_overlay(
 
         data = resp.json()
         raw = data["choices"][0]["message"]["content"]
-        parsed = _parse_json_response(raw)
+        try:
+            parsed = _parse_json_response(raw)
+        except ValueError as parse_exc:
+            # The model returned non-JSON — do NOT report SUCCESS with empty
+            # fields. Surface an explicit PARSE_ERROR instead.
+            latency_ms = int((time.monotonic() - start) * 1000)
+            return QualitativeOverlay(
+                provider=LLMProvider.DEEPSEEK,
+                model=DEEPSEEK_MODEL,
+                ticker=evidence.ticker,
+                status=OverlayStatus.PARSE_ERROR,
+                error_message=f"Invalid JSON from model: {parse_exc}",
+                latency_ms=latency_ms,
+            )
         latency_ms = int((time.monotonic() - start) * 1000)
 
         assessment = OverlayAssessment(

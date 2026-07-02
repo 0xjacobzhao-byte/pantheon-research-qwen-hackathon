@@ -46,7 +46,11 @@ NEGATIVE_WORDS = {
 
 def classify_tone(overlay: QualitativeOverlay) -> Tone:
     """Classify the tone of an overlay based on keyword analysis of its text."""
-    if overlay.status in (OverlayStatus.BLOCKED_BY_MISSING_CREDENTIAL, OverlayStatus.API_ERROR):
+    if overlay.status in (
+        OverlayStatus.BLOCKED_BY_MISSING_CREDENTIAL,
+        OverlayStatus.API_ERROR,
+        OverlayStatus.PARSE_ERROR,
+    ):
         return Tone.NEUTRAL
 
     # Gather all text from the overlay
