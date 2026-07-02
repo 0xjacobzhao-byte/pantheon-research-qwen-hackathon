@@ -16,6 +16,7 @@ from app.models import ProjectInfo
 from app.qwen_overlay import run_qwen_overlay
 from app.deepseek_overlay import run_deepseek_overlay
 from app.sample_loader import list_available_tickers, load_evidence
+from app.sample_modules import get_module_snapshots
 from app.validation_stub import get_validation_methodology
 
 load_dotenv()
@@ -208,3 +209,9 @@ async def data_quality():
 async def validation():
     """Forward-validation methodology + clearly-labelled illustrative summary."""
     return get_validation_methodology()
+
+
+@app.get("/api/modules")
+async def modules():
+    """Module snapshot grid — full research-system scope (context-only samples)."""
+    return get_module_snapshots()

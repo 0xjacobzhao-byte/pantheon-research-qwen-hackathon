@@ -50,6 +50,7 @@ check "deepseek overlay"   "$BASE/api/overlay/deepseek/$TICKER" '.status'       
 check "comparison state"   "$BASE/api/comparison/$TICKER"       '.data_state'        "."
 check "comparison agree"   "$BASE/api/comparison/$TICKER"       '.agreement_level'   "."
 check "data quality"       "$BASE/api/data-quality"             '.mode'              "."
+check "module grid"        "$BASE/api/modules"                  '.modules[0].data_state' "."
 check "alibaba proof (v2)" "$BASE/api/proof/alibaba-cloud"      '.schema_version'    "alibaba-proof"
 check "proof host honest"  "$BASE/api/proof/alibaba-cloud"      '.host_runtime'      "."
 check "proof db precise"   "$BASE/api/proof/alibaba-cloud"      '.database.production_data_migrated' "false"

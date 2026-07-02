@@ -24,6 +24,10 @@ the README will reference them once present.
   DeepSeek provider cards, agreement score, divergences, human-review gate.
   Source: local `http://localhost:5173` (select NVDA → Run Comparison) or
   `https://pantheon-research.com` Ticker Profile → Qwen vs DeepSeek.
+- [ ] `module_snapshot_grid.png` — ModuleSnapshotGrid (System Scope): Macro / TA /
+  FICC (FI/FX/Commodity) / Equity / Qwen-vs-DeepSeek / Data Quality cards with
+  per-module `data_state` and "what not to infer". Source: `/api/modules` rendered
+  at the top of the demo cockpit.
 - [ ] `data_quality_panel.png` — DataQualityPanel (Research-Ops · Data Quality):
   provider config, coverage, per-ticker data_state table.
 - [ ] `alibaba_live_proof.png` — browser view of the live proof JSON

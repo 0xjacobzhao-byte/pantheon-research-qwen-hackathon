@@ -174,6 +174,27 @@ export interface DataQualityReport {
   governance_note: string;
 }
 
+export interface ModuleSnapshot {
+  key: string;
+  title: string;
+  group: string;
+  data_state: string;
+  freshness: string;
+  validation_state: string;
+  role: string;
+  what_not_to_infer: string;
+  sample_endpoint: string;
+  headline: string;
+}
+
+export interface ModuleSnapshotGridData {
+  schema_version: string;
+  as_of: string;
+  generated_at_utc: string;
+  disclaimer: string;
+  modules: ModuleSnapshot[];
+}
+
 export interface DemoFlowStep {
   step: number;
   title: string;
@@ -201,3 +222,4 @@ export const fetchAlibabaProof = () =>
   getJson<AlibabaCloudProof>("/proof/alibaba-cloud");
 export const fetchQwenConfig = () => getJson<QwenConfig>("/alibaba/qwen-config");
 export const fetchDataQuality = () => getJson<DataQualityReport>("/data-quality");
+export const fetchModules = () => getJson<ModuleSnapshotGridData>("/modules");

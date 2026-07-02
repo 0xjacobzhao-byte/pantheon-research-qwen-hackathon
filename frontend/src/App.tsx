@@ -6,15 +6,18 @@ import {
   fetchAlibabaProof,
   fetchQwenConfig,
   fetchDataQuality,
+  fetchModules,
   type ProjectInfo,
   type DemoFlow,
   type ComparisonResult,
   type AlibabaCloudProof,
   type QwenConfig,
   type DataQualityReport,
+  type ModuleSnapshotGridData,
 } from "./api";
 import OverlayComparisonPanel from "./components/equity/OverlayComparisonPanel";
 import DataQualityPanel from "./components/DataQualityPanel";
+import ModuleSnapshotGrid from "./components/ModuleSnapshotGrid";
 
 const TICKERS = ["MA", "NVDA"];
 
@@ -24,6 +27,7 @@ function App() {
   const [proof, setProof] = useState<AlibabaCloudProof | null>(null);
   const [qwenCfg, setQwenCfg] = useState<QwenConfig | null>(null);
   const [dataQuality, setDataQuality] = useState<DataQualityReport | null>(null);
+  const [modules, setModules] = useState<ModuleSnapshotGridData | null>(null);
   const [selected, setSelected] = useState<string>("");
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,6 +39,7 @@ function App() {
     fetchAlibabaProof().then(setProof).catch(() => {});
     fetchQwenConfig().then(setQwenCfg).catch(() => {});
     fetchDataQuality().then(setDataQuality).catch(() => {});
+    fetchModules().then(setModules).catch(() => {});
   }, []);
 
   const handleCompare = useCallback(async () => {
@@ -90,6 +95,19 @@ function App() {
           Trading — every signal gated by human review.
         </p>
       </section>
+
+      {/* System scope — module snapshot grid */}
+      {modules && (
+        <section className="card">
+          <h2>System Scope — Module Snapshots</h2>
+          <p className="section-lead">
+            Pantheon Research is a multi-asset research operating system. This grid
+            maps its full scope (Macro · TA · FICC · Equity · Research-Ops) with
+            each module's honest governance state — not just the Qwen overlay.
+          </p>
+          <ModuleSnapshotGrid grid={modules} />
+        </section>
+      )}
 
       {/* Alibaba Cloud proof v2 */}
       {proof && (

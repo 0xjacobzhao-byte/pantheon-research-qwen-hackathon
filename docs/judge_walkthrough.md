@@ -15,6 +15,7 @@ Everything here runs **offline with no secrets**; live mode is optional.
 | 4 | [`frontend/src/components/equity/OverlayComparisonPanel.tsx`](../frontend/src/components/equity/OverlayComparisonPanel.tsx) | Product-grade Qwen-vs-DeepSeek UI with fail-closed states. |
 | 5 | [`backend/app/evidence_pack.py`](../backend/app/evidence_pack.py) | Provenance-committed evidence pack (content hash). |
 | 6 | [`backend/app/data_quality.py`](../backend/app/data_quality.py) | Public-safe Research-Ops / governance slice. |
+| 7 | [`backend/app/sample_modules.py`](../backend/app/sample_modules.py) | Module snapshot grid — full multi-asset scope (Macro/TA/FICC/Equity) with honest per-module state. See [`module_snapshots.md`](module_snapshots.md). |
 
 ## 2. How to run locally (offline, no secrets)
 
