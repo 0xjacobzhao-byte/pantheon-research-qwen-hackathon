@@ -5,8 +5,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${BACKEND_PORT:-8000}:8000"
+    # Optional: offline demo mode needs no secrets. Provide a .env (copied from
+    # .env.example) only to enable live Qwen/DeepSeek mode.
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
