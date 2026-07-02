@@ -1,0 +1,19 @@
+{
+  "_redaction": "Redacted coverage summary for the public demo. No private DB URLs, no proprietary universe.",
+  "schema_version": "coverage-1.0",
+  "timestamp_utc": "2026-07-02T12:00:00Z",
+  "model_qwen": "qwen-plus (public demo default; production routes premium Qwen tiers)",
+  "model_deepseek": "deepseek-chat",
+  "demo_tickers": [
+    "MA",
+    "NVDA"
+  ],
+  "public_demo": {
+    "evidence_packs": 2,
+    "dual_overlays_bundled": 2,
+    "healthy_comparisons": 2,
+    "errors": 0,
+    "mode": "offline (bundled samples)"
+  },
+  "note": "Production coverage figures (universe size, refresh cadence, cost) live in the private repo and are intentionally not published here."
+}

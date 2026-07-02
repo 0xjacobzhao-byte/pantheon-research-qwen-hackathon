@@ -7,8 +7,10 @@ import re
 from typing import Optional
 
 from .models import (
+    USABLE_STATUSES,
     AgreementLevel,
     ComparisonResult,
+    DataState,
     Divergence,
     EquityEvidence,
     LLMProvider,
@@ -219,6 +221,37 @@ def agreement_level_from_score(score: float) -> AgreementLevel:
 
 
 # ---------------------------------------------------------------------------
+# Data state derivation
+# ---------------------------------------------------------------------------
+
+def derive_data_state(
+    qwen: QualitativeOverlay, deepseek: QualitativeOverlay
+) -> DataState:
+    """Derive the honest comparison-level data state from provider statuses.
+
+    Never reports a comparison as fully live/usable unless BOTH sides carry a
+    usable assessment. This is what stops a fail-closed provider from being
+    silently averaged into an agreement score.
+    """
+    q_usable = qwen.status in USABLE_STATUSES
+    d_usable = deepseek.status in USABLE_STATUSES
+
+    if not q_usable and not d_usable:
+        return DataState.BLOCKED
+    if q_usable != d_usable:
+        return DataState.PARTIAL
+
+    # Both usable — distinguish live vs sample vs mixed.
+    q_live = qwen.status == OverlayStatus.SUCCESS
+    d_live = deepseek.status == OverlayStatus.SUCCESS
+    if q_live and d_live:
+        return DataState.LIVE_DUAL
+    if not q_live and not d_live:
+        return DataState.OFFLINE_SAMPLE
+    return DataState.MIXED
+
+
+# ---------------------------------------------------------------------------
 # Evidence gaps
 # ---------------------------------------------------------------------------
 
@@ -245,46 +278,73 @@ def collect_evidence_gaps(
 # Full comparison
 # ---------------------------------------------------------------------------
 
-async def run_comparison(
+def build_comparison(
     evidence: EquityEvidence,
-    demo_mode: bool = False,
+    qwen_overlay: QualitativeOverlay,
+    deepseek_overlay: QualitativeOverlay,
+    evidence_hash: Optional[str] = None,
 ) -> ComparisonResult:
-    """Run both overlays concurrently and produce a full comparison."""
-    from .qwen_overlay import run_qwen_overlay
-    from .deepseek_overlay import run_deepseek_overlay
+    """Assemble a ComparisonResult from two overlays.
 
-    qwen_task = run_qwen_overlay(evidence, demo_mode=demo_mode)
-    ds_task = run_deepseek_overlay(evidence, demo_mode=demo_mode)
-    qwen_overlay, deepseek_overlay = await asyncio.gather(qwen_task, ds_task)
-
-    # Tone analysis
+    Fail-closed: agreement is only scored when BOTH sides are usable. Otherwise
+    the result is marked NOT_COMPARABLE, agreement_score is None, and human
+    review is required with an explicit reason — never a fabricated agreement.
+    """
     qwen_tone = classify_tone(qwen_overlay)
     deepseek_tone = classify_tone(deepseek_overlay)
+    data_state = derive_data_state(qwen_overlay, deepseek_overlay)
 
-    # Divergence detection
+    # Evidence gaps are meaningful even from a single usable side.
+    evidence_gaps = collect_evidence_gaps(qwen_overlay, deepseek_overlay)
+
+    if data_state in (DataState.BLOCKED, DataState.PARTIAL):
+        # Not enough to compare. Do not manufacture an agreement score.
+        if data_state == DataState.BLOCKED:
+            reason = "Both providers failed to return a usable assessment (fail-closed)."
+        else:
+            usable = "Qwen" if qwen_overlay.status in USABLE_STATUSES else "DeepSeek"
+            reason = f"Only {usable} returned a usable assessment; comparison not possible."
+        return ComparisonResult(
+            ticker=evidence.ticker,
+            data_state=data_state,
+            qwen_status=qwen_overlay.status,
+            deepseek_status=deepseek_overlay.status,
+            evidence=evidence,
+            evidence_hash=evidence_hash,
+            qwen_overlay=qwen_overlay,
+            deepseek_overlay=deepseek_overlay,
+            agreement_score=None,
+            agreement_level=AgreementLevel.NOT_COMPARABLE,
+            qwen_tone=qwen_tone,
+            deepseek_tone=deepseek_tone,
+            divergences=[],
+            evidence_gaps=evidence_gaps,
+            human_review_required=True,
+            human_review_reason=reason,
+        )
+
+    # Both usable — full comparison.
     divergences = detect_divergences(qwen_overlay, deepseek_overlay)
-
-    # Agreement scoring
     agreement_score = compute_agreement_score(
         qwen_overlay, deepseek_overlay, divergences, qwen_tone, deepseek_tone
     )
     agreement_level = agreement_level_from_score(agreement_score)
-
-    # Evidence gaps
-    evidence_gaps = collect_evidence_gaps(qwen_overlay, deepseek_overlay)
-
-    # Human review required?
     has_major = any(d.severity == "major" for d in divergences)
-    human_review = (
-        agreement_level == AgreementLevel.LOW
-        or has_major
-        or qwen_overlay.status != OverlayStatus.SUCCESS
-        or deepseek_overlay.status != OverlayStatus.SUCCESS
-    )
+
+    human_review = agreement_level == AgreementLevel.LOW or has_major
+    reason: Optional[str] = None
+    if agreement_level == AgreementLevel.LOW:
+        reason = "Low agreement between providers."
+    elif has_major:
+        reason = "At least one major divergence between providers."
 
     return ComparisonResult(
         ticker=evidence.ticker,
+        data_state=data_state,
+        qwen_status=qwen_overlay.status,
+        deepseek_status=deepseek_overlay.status,
         evidence=evidence,
+        evidence_hash=evidence_hash,
         qwen_overlay=qwen_overlay,
         deepseek_overlay=deepseek_overlay,
         agreement_score=round(agreement_score, 2),
@@ -294,37 +354,31 @@ async def run_comparison(
         divergences=divergences,
         evidence_gaps=evidence_gaps,
         human_review_required=human_review,
+        human_review_reason=reason,
     )
+
+
+async def run_comparison(
+    evidence: EquityEvidence,
+    demo_mode: bool = False,
+    evidence_hash: Optional[str] = None,
+) -> ComparisonResult:
+    """Run both overlays concurrently and produce a full comparison."""
+    from .qwen_overlay import run_qwen_overlay
+    from .deepseek_overlay import run_deepseek_overlay
+
+    qwen_task = run_qwen_overlay(evidence, demo_mode=demo_mode)
+    ds_task = run_deepseek_overlay(evidence, demo_mode=demo_mode)
+    qwen_overlay, deepseek_overlay = await asyncio.gather(qwen_task, ds_task)
+
+    return build_comparison(evidence, qwen_overlay, deepseek_overlay, evidence_hash)
 
 
 def load_comparison_from_sample(
     evidence: EquityEvidence,
     qwen_overlay: QualitativeOverlay,
     deepseek_overlay: QualitativeOverlay,
+    evidence_hash: Optional[str] = None,
 ) -> ComparisonResult:
     """Build a ComparisonResult from pre-loaded sample overlays (offline mode)."""
-    qwen_tone = classify_tone(qwen_overlay)
-    deepseek_tone = classify_tone(deepseek_overlay)
-    divergences = detect_divergences(qwen_overlay, deepseek_overlay)
-    agreement_score = compute_agreement_score(
-        qwen_overlay, deepseek_overlay, divergences, qwen_tone, deepseek_tone
-    )
-    agreement_level = agreement_level_from_score(agreement_score)
-    evidence_gaps = collect_evidence_gaps(qwen_overlay, deepseek_overlay)
-    has_major = any(d.severity == "major" for d in divergences)
-
-    return ComparisonResult(
-        ticker=evidence.ticker,
-        evidence=evidence,
-        qwen_overlay=qwen_overlay,
-        deepseek_overlay=deepseek_overlay,
-        agreement_score=round(agreement_score, 2),
-        agreement_level=agreement_level,
-        qwen_tone=qwen_tone,
-        deepseek_tone=deepseek_tone,
-        divergences=divergences,
-        evidence_gaps=evidence_gaps,
-        human_review_required=(
-            agreement_level == AgreementLevel.LOW or has_major
-        ),
-    )
+    return build_comparison(evidence, qwen_overlay, deepseek_overlay, evidence_hash)

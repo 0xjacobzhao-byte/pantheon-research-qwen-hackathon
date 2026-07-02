@@ -69,10 +69,12 @@ The `GET /api/alibaba/qwen-config` endpoint returns the current Qwen/DashScope c
 
 ```json
 {
-  "provider": "Alibaba DashScope / Qwen Max",
+  "provider": "Alibaba Cloud DashScope (Model Studio)",
   "base_url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
   "model": "qwen-plus",
   "integration_type": "OpenAI-compatible chat completions",
+  "prompt_version": "qwen-overlay-v1.1",
+  "output_schema_version": "overlay-assessment-1.0",
   "credential_configured": false,
   "demo_mode": "offline"
 }

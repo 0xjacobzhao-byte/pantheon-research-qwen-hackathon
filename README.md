@@ -1,6 +1,52 @@
-# Pantheon Research — Qwen Cloud Hackathon Demo
+# Pantheon Research — Qwen Cloud Hackathon
 
-> Dual-LLM equity qualitative overlay: Qwen Cloud vs DeepSeek side-by-side comparison with structured agreement analysis.
+> Dual-LLM equity qualitative overlay: Qwen Cloud vs DeepSeek side-by-side comparison with agreement scoring, fail-closed LLM handling, evidence provenance, and a human-review gate.
+
+A sanitized, judge-facing vertical slice of the private Pantheon Research
+production system — cloud deployment, data governance, dual-model comparison,
+and product-grade UI. Not an API wrapper.
+
+## Judge Quickstart
+
+```bash
+git clone https://github.com/0xjacobzhao-byte/pantheon-research-qwen-hackathon
+cd pantheon-research-qwen-hackathon
+docker compose up --build          # frontend :5173 · backend :8000
+./scripts/judge_smoke.sh           # one-command end-to-end smoke (offline, no secrets)
+```
+
+Verify Qwen is reachable **from Alibaba Cloud** (live ECS box, Nginx → FastAPI):
+
+```bash
+curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
+```
+
+**Read next:** [docs/judge_walkthrough.md](docs/judge_walkthrough.md) — a
+10-minute guided tour.
+
+### Prominent links
+
+| What | Where |
+|------|-------|
+| Alibaba proof code (v2) | [`backend/app/alibaba_cloud_proof.py`](backend/app/alibaba_cloud_proof.py) |
+| Qwen integration code | [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py) |
+| Comparison engine | [`backend/app/comparison.py`](backend/app/comparison.py) |
+| Evidence pack (provenance + hash) | [`backend/app/evidence_pack.py`](backend/app/evidence_pack.py) |
+| Product UI | [`frontend/src/components/equity/OverlayComparisonPanel.tsx`](frontend/src/components/equity/OverlayComparisonPanel.tsx) |
+| Mini Research-Ops / data quality | [`backend/app/data_quality.py`](backend/app/data_quality.py) |
+| Live proof docs | [docs/live_proof.md](docs/live_proof.md) |
+| Production mapping | [docs/production_architecture_mapping.md](docs/production_architecture_mapping.md) |
+| Judge walkthrough | [docs/judge_walkthrough.md](docs/judge_walkthrough.md) |
+| Validation methodology | [docs/validation_methodology.md](docs/validation_methodology.md) |
+
+### What this repo claims (and does not)
+
+- **Private production repo stays closed.** This is a sanitized vertical slice.
+- **No secrets** — no API keys, DB URLs, admin tokens, or private datasets.
+- **No autonomous trading. LLMs do not execute trades** — every signal passes a
+  human-review gate.
+- **Qwen is called live** through Alibaba DashScope when live mode is enabled;
+  **offline mode** works fully with bundled samples and no credentials.
 
 ## Project Description
 
@@ -40,15 +86,37 @@ See [docs/qwen_integration.md](docs/qwen_integration.md) for details.
 
 ## Alibaba Cloud Integration
 
-| Component | Service |
-|-----------|---------|
+| Component | Detail |
+|-----------|--------|
 | Cloud Provider | Alibaba Cloud |
+| AI Provider (Qwen) | Alibaba Cloud DashScope / Model Studio |
 | Backend Runtime | Dockerized FastAPI |
 | Reverse Proxy | Nginx |
-| Database | Alibaba RDS PostgreSQL-compatible database |
-| LLM Provider | Alibaba DashScope / Qwen Max |
+| Compute Host | Reported **honestly** via `alibaba_hosted` (same image runs on Railway and Alibaba ECS) |
+| Database | See precise claim below |
 
-The `/api/alibaba/proof` endpoint returns deployment metadata. No real credentials are stored — all configuration is loaded from environment variables.
+The `/api/proof/alibaba-cloud` endpoint (v2) returns deployment metadata as a
+secret-free proof. Credentials are reported as **booleans only**, and the
+endpoint makes **no external calls** — so it never claims connectivity it did
+not verify.
+
+### Database claim (precise — no overclaiming)
+
+RDS **provisioning** is kept distinct from full production-data **migration**:
+
+```json
+"database": {
+  "provider": "PostgreSQL (Alibaba RDS-compatible target engine)",
+  "configured": false,            // true only when DATABASE_URL is set in this runtime
+  "connected": null,              // not probed — the proof makes no external call
+  "role": "Metadata / evidence store in production; the offline demo needs no DB",
+  "production_data_migrated": false,
+  "note": "Alibaba RDS provisioning is distinct from full production-data migration; migration is not claimed without row-count and read-path verification."
+}
+```
+
+The public offline demo runs entirely against **bundled samples** and requires
+no database. Production data migration is **not asserted** in this repo.
 
 ### Live deployment proof
 
@@ -93,8 +161,9 @@ call). A redacted live-call artifact is committed at
 | Frontend | React 18 + TypeScript + Vite 6 |
 | LLM (Qwen) | Alibaba Cloud DashScope (OpenAI-compatible) |
 | LLM (DeepSeek) | DeepSeek API (OpenAI-compatible) |
-| Database | Alibaba RDS PostgreSQL-compatible |
-| Deploy | Docker Compose |
+| Database | PostgreSQL (Alibaba RDS-compatible) — production only; offline demo needs none |
+| Deploy | Docker Compose · live Alibaba ECS (Nginx → FastAPI) |
+| Tests | pytest (backend) · vitest + Testing Library (frontend) |
 | License | Apache-2.0 |
 
 ## Local Setup
@@ -143,12 +212,15 @@ docker-compose up --build
 | GET | `/` | Root info |
 | GET | `/health` | Health check |
 | GET | `/api/project` | Project metadata |
-| GET | `/api/evidence/{ticker}` | Equity evidence pack |
+| GET | `/api/evidence/{ticker}` | Evidence pack + provenance (sha256 content hash) |
 | GET | `/api/overlay/qwen/{ticker}` | Qwen Cloud qualitative overlay |
 | GET | `/api/overlay/deepseek/{ticker}` | DeepSeek qualitative overlay |
-| GET | `/api/comparison/{ticker}` | Full dual-provider comparison |
+| GET | `/api/comparison/{ticker}` | Full dual-provider comparison (`data_state`, agreement, review gate) |
+| GET | `/api/data-quality` | Mini Research-Ops / governance snapshot |
+| GET | `/api/validation` | Forward-validation methodology + illustrative summary |
 | GET | `/api/demo-flow` | Demo flow steps |
-| GET | `/api/alibaba/proof` | Alibaba Cloud deployment proof |
+| GET | `/api/proof/alibaba-cloud` | Alibaba Cloud deployment proof (v2, canonical) |
+| GET | `/api/alibaba/proof` | Deployment proof (back-compat alias) |
 | GET | `/api/alibaba/qwen-config` | Qwen / DashScope configuration |
 
 ## Demo Flow
@@ -172,20 +244,31 @@ Each overlay produces these structured fields:
 - `confidence` (0–1)
 - `missing_evidence` (list)
 
-### Comparison Output
+### Comparison Output (illustrative shape)
 
 ```json
 {
-  "ticker": "MA",
-  "agreement_score": 0.78,
-  "agreement_level": "HIGH",
+  "ticker": "NVDA",
+  "data_state": "OFFLINE_SAMPLE",
+  "qwen_status": "OFFLINE_SAMPLE",
+  "deepseek_status": "OFFLINE_SAMPLE",
+  "evidence_hash": "sha256:b1b1a99dc8d5e218…",
+  "agreement_score": 0.44,
+  "agreement_level": "LOW",
   "qwen_tone": "conservative_positive",
-  "deepseek_tone": "positive",
-  "divergences": [],
-  "evidence_gaps": [],
-  "human_review_required": false
+  "deepseek_tone": "conservative_positive",
+  "divergences": [{ "field": "pricing_power", "severity": "major" }],
+  "evidence_gaps": ["No competitive ASIC roadmap analysis"],
+  "human_review_required": true,
+  "human_review_reason": "Low agreement between providers."
 }
 ```
+
+`data_state` is the honest headline: `LIVE_DUAL`, `OFFLINE_SAMPLE`, `MIXED`,
+`PARTIAL`, or `BLOCKED`. When a provider fails closed, the comparison is marked
+`NOT_COMPARABLE` and **no agreement score is fabricated**. The NVDA sample above
+is real output — the two models genuinely diverge, so the human-review gate
+engages.
 
 ## Tests
 

@@ -20,13 +20,37 @@ class LLMProvider(str, Enum):
 
 
 class OverlayStatus(str, Enum):
-    """Status of an LLM overlay response."""
+    """Per-provider status of a single LLM overlay response.
+
+    This is the provider-level status. It is deliberately explicit so callers
+    can never mistake a silently-empty response for a real assessment.
+    """
 
     SUCCESS = "SUCCESS"
+    OFFLINE_SAMPLE = "OFFLINE_SAMPLE"
     BLOCKED_BY_MISSING_CREDENTIAL = "BLOCKED_BY_MISSING_CREDENTIAL"
     API_ERROR = "API_ERROR"
     PARSE_ERROR = "PARSE_ERROR"
-    OFFLINE_SAMPLE = "OFFLINE_SAMPLE"
+    QWEN_NOT_GENERATED = "QWEN_NOT_GENERATED"
+
+
+# States that carry a usable, structured assessment.
+USABLE_STATUSES = {OverlayStatus.SUCCESS, OverlayStatus.OFFLINE_SAMPLE}
+
+
+class DataState(str, Enum):
+    """Comparison-level data state — the honest headline for a comparison.
+
+    Derived from the two provider statuses. It tells a judge, at a glance,
+    whether they are looking at a live dual-model result, bundled samples, a
+    single-sided result, or a fail-closed state — never a hollow SUCCESS.
+    """
+
+    LIVE_DUAL = "LIVE_DUAL"            # both providers returned live SUCCESS
+    OFFLINE_SAMPLE = "OFFLINE_SAMPLE"  # both overlays from bundled samples
+    MIXED = "MIXED"                    # one live, one sample
+    PARTIAL = "PARTIAL"                # exactly one provider usable
+    BLOCKED = "BLOCKED"                # neither provider usable (fail-closed)
 
 
 class AgreementLevel(str, Enum):
@@ -35,6 +59,7 @@ class AgreementLevel(str, Enum):
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
+    NOT_COMPARABLE = "NOT_COMPARABLE"
 
 
 class Tone(str, Enum):
@@ -72,6 +97,39 @@ class EquityEvidence(BaseModel):
     summary: str = Field(..., description="Business description")
 
 
+class EvidenceSource(BaseModel):
+    """A sanitized provenance label for a slice of the evidence pack.
+
+    Only public-safe labels are ever emitted — never a provider key, private
+    URL, or account id.
+    """
+
+    group: str = Field(..., description="Evidence group, e.g. 'fundamentals'")
+    label: str = Field(..., description="Human-readable source label")
+    origin: str = Field(..., description="Sanitized origin, e.g. 'bundled_sample'")
+    as_of: str = Field(..., description="As-of date (ISO) for this slice")
+
+
+class EvidenceProvenance(BaseModel):
+    """Provenance envelope committing an evidence pack to a content hash."""
+
+    evidence_schema_version: str = Field(..., description="Evidence schema version")
+    evidence_hash: str = Field(..., description="SHA-256 of the canonical evidence JSON")
+    generated_at_utc: str = Field(..., description="Pack build timestamp (UTC ISO)")
+    sources: list[EvidenceSource] = Field(default_factory=list, description="Per-group provenance")
+    redaction_note: str = Field(
+        "Public demo evidence is bundled and sanitized; no private datasets are included.",
+        description="Redaction disclosure",
+    )
+
+
+class EvidencePack(BaseModel):
+    """Evidence + provenance, returned by /api/evidence/{ticker}."""
+
+    evidence: EquityEvidence = Field(..., description="Quantitative evidence")
+    provenance: EvidenceProvenance = Field(..., description="Provenance & content hash")
+
+
 # ---------------------------------------------------------------------------
 # Overlay assessment
 # ---------------------------------------------------------------------------
@@ -100,6 +158,15 @@ class OverlayAssessment(BaseModel):
     missing_evidence: list[str] = Field(default_factory=list, description="Evidence gaps identified by the model")
 
 
+class TokenUsage(BaseModel):
+    """Optional token/cost metadata when the provider returns it."""
+
+    prompt_tokens: Optional[int] = Field(None, description="Prompt tokens")
+    completion_tokens: Optional[int] = Field(None, description="Completion tokens")
+    total_tokens: Optional[int] = Field(None, description="Total tokens")
+    estimated_cost_usd: Optional[float] = Field(None, description="Estimated cost (USD), placeholder")
+
+
 # ---------------------------------------------------------------------------
 # Overlay
 # ---------------------------------------------------------------------------
@@ -110,11 +177,15 @@ class QualitativeOverlay(BaseModel):
     provider: LLMProvider = Field(..., description="LLM provider")
     model: str = Field(..., description="Model identifier")
     ticker: str = Field(..., description="Stock ticker")
-    status: OverlayStatus = Field(..., description="Response status")
+    status: OverlayStatus = Field(..., description="Provider-level response status")
     takeaway: str = Field("", description="One-paragraph LLM takeaway")
     assessment: Optional[OverlayAssessment] = Field(None, description="Structured assessment fields")
-    error_message: Optional[str] = Field(None, description="Error if status != SUCCESS")
+    error_message: Optional[str] = Field(None, description="Error if status is not usable")
     latency_ms: Optional[int] = Field(None, description="Response latency (ms)")
+    attempts: int = Field(1, description="Number of provider attempts (incl. retries)")
+    prompt_version: Optional[str] = Field(None, description="Prompt template version")
+    output_schema_version: Optional[str] = Field(None, description="Expected output schema version")
+    usage: Optional[TokenUsage] = Field(None, description="Token/cost metadata if returned")
 
 
 # ---------------------------------------------------------------------------
@@ -138,16 +209,21 @@ class ComparisonResult(BaseModel):
     """Side-by-side comparison of Qwen and DeepSeek overlays."""
 
     ticker: str = Field(..., description="Stock ticker")
+    data_state: DataState = Field(DataState.OFFLINE_SAMPLE, description="Headline comparison data state")
+    qwen_status: OverlayStatus = Field(..., description="Qwen provider status")
+    deepseek_status: OverlayStatus = Field(..., description="DeepSeek provider status")
     evidence: EquityEvidence = Field(..., description="Underlying evidence")
+    evidence_hash: Optional[str] = Field(None, description="Evidence content hash used for this comparison")
     qwen_overlay: QualitativeOverlay = Field(..., description="Qwen overlay")
     deepseek_overlay: QualitativeOverlay = Field(..., description="DeepSeek overlay")
-    agreement_score: float = Field(0.0, description="Agreement score 0–1")
-    agreement_level: AgreementLevel = Field(AgreementLevel.MEDIUM, description="HIGH / MEDIUM / LOW")
+    agreement_score: Optional[float] = Field(None, description="Agreement score 0–1 (None if not comparable)")
+    agreement_level: AgreementLevel = Field(AgreementLevel.MEDIUM, description="HIGH / MEDIUM / LOW / NOT_COMPARABLE")
     qwen_tone: Tone = Field(Tone.NEUTRAL, description="Qwen tone classification")
     deepseek_tone: Tone = Field(Tone.NEUTRAL, description="DeepSeek tone classification")
     divergences: list[Divergence] = Field(default_factory=list, description="Divergences between providers")
     evidence_gaps: list[str] = Field(default_factory=list, description="Combined evidence gaps")
     human_review_required: bool = Field(False, description="Whether human review is needed")
+    human_review_reason: Optional[str] = Field(None, description="Why human review was flagged")
 
 
 # ---------------------------------------------------------------------------
@@ -178,26 +254,65 @@ class ProjectInfo(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Alibaba Cloud proof
+# Alibaba Cloud proof (v2) & Qwen config
 # ---------------------------------------------------------------------------
 
-class AlibabaCloudProof(BaseModel):
-    """Alibaba Cloud deployment proof (no secrets)."""
+class DatabaseProof(BaseModel):
+    """Precise, non-overclaiming database representation.
 
+    Distinguishes RDS *provisioning* from full production-data *migration*, and
+    never asserts live connectivity from an endpoint that makes no external
+    calls.
+    """
+
+    provider: str = Field(..., description="Target database engine descriptor")
+    configured: bool = Field(..., description="Whether DATABASE_URL is set in this runtime")
+    connected: Optional[bool] = Field(None, description="Live connectivity — null when not probed")
+    role: str = Field(..., description="What the database is used for (or 'not asserted')")
+    production_data_migrated: bool = Field(False, description="Whether full prod data is asserted migrated")
+    note: str = Field(..., description="Precise disclosure separating provisioning from migration")
+
+
+class AlibabaCloudProof(BaseModel):
+    """Alibaba Cloud deployment proof v2 — public-safe, secret-free, honest host.
+
+    Credentials are reported as booleans only. The compute *host* is reported
+    honestly (``alibaba_hosted``): the same image runs on Railway and on an
+    Alibaba Cloud ECS box, and this proof never claims Alibaba compute when it
+    is not on it. The Qwen *AI provider* is always Alibaba Cloud DashScope.
+    """
+
+    schema_version: str = "alibaba-proof-2.0"
+    project: str = "Pantheon Research"
     cloud_provider: str = "Alibaba Cloud"
+    host_runtime: str = "local/unknown"
+    alibaba_hosted: bool = False
     backend_runtime: str = "Dockerized FastAPI"
     reverse_proxy: str = "Nginx"
-    database_service: str = "Alibaba RDS PostgreSQL-compatible database"
-    qwen_provider: str = "Alibaba DashScope / Qwen Max"
-    details: dict = Field(default_factory=dict)
+    frontend_source: str = "React + TypeScript + Vite (static build)"
+    qwen_provider: str = "Alibaba Cloud DashScope (Model Studio)"
+    qwen_base_url: str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    qwen_model: str = "qwen-plus"
+    qwen_configured: bool = False
+    dashscope_api_key_configured: bool = False
+    demo_mode: str = "offline"
+    region: str = "ap-southeast-1"
+    git_sha: str = "unknown"
+    timestamp_utc: str = ""
+    proof_endpoints: dict = Field(default_factory=dict)
+    database: DatabaseProof
+    safe_claims: list[str] = Field(default_factory=list)
+    non_claims: list[str] = Field(default_factory=list)
 
 
 class QwenConfig(BaseModel):
     """Qwen / DashScope configuration (no secrets)."""
 
-    provider: str = "Alibaba DashScope / Qwen Max"
+    provider: str = "Alibaba Cloud DashScope (Model Studio)"
     base_url: str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
     model: str = "qwen-plus"
     integration_type: str = "OpenAI-compatible chat completions"
+    prompt_version: str = ""
+    output_schema_version: str = ""
     credential_configured: bool = False
     demo_mode: str = "offline"

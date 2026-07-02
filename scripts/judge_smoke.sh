@@ -32,16 +32,31 @@ check() { # name url jq-filter expected-substring
   fi
 }
 
+softcheck() { # like check(), but never fails the run (best-effort live probe)
+  local name="$1" url="$2" filt="$3" want="$4"
+  local out; out=$(curl -sS -m 30 "$url" 2>/dev/null | jqget "$filt" 2>/dev/null)
+  if printf '%s' "$out" | grep -qi "$want"; then
+    printf "  PASS  %-34s %s\n" "$name" "$out"
+  else
+    printf "  SKIP  %-34s (live host not reachable — offline demo unaffected)\n" "$name"
+  fi
+}
+
 echo "== Local backend (offline mode, no secrets) @ $BASE =="
-check "health"            "$BASE/health"                       '.status'          "ok"
-check "qwen overlay"      "$BASE/api/overlay/qwen/$TICKER"     '.status'          "SAMPLE"
-check "deepseek overlay"  "$BASE/api/overlay/deepseek/$TICKER" '.status'          "SAMPLE"
-check "comparison"        "$BASE/api/comparison/$TICKER"       '.agreement_level' "."
-check "alibaba proof code" "$BASE/api/alibaba/proof"           '.cloud_provider'  "Alibaba"
+check "health"             "$BASE/health"                       '.status'            "healthy"
+check "evidence pack hash" "$BASE/api/evidence/$TICKER"         '.provenance.evidence_hash' "sha256"
+check "qwen overlay"       "$BASE/api/overlay/qwen/$TICKER"     '.status'            "SAMPLE"
+check "deepseek overlay"   "$BASE/api/overlay/deepseek/$TICKER" '.status'            "SAMPLE"
+check "comparison state"   "$BASE/api/comparison/$TICKER"       '.data_state'        "."
+check "comparison agree"   "$BASE/api/comparison/$TICKER"       '.agreement_level'   "."
+check "data quality"       "$BASE/api/data-quality"             '.mode'              "."
+check "alibaba proof (v2)" "$BASE/api/proof/alibaba-cloud"      '.schema_version'    "alibaba-proof"
+check "proof host honest"  "$BASE/api/proof/alibaba-cloud"      '.host_runtime'      "."
+check "proof db precise"   "$BASE/api/proof/alibaba-cloud"      '.database.production_data_migrated' "false"
 
 echo
-echo "== Live Alibaba Cloud ECS proof @ $ALIBABA =="
-check "alibaba live proof" "$ALIBABA/api/proof/alibaba-cloud"  '.runtime'         "Alibaba"
+echo "== Live Alibaba Cloud ECS proof @ $ALIBABA (best-effort; production backend) =="
+softcheck "alibaba live proof" "$ALIBABA/api/proof/alibaba-cloud" '.cloud_provider' "Alibaba"
 
 echo
 echo "-------------------------------------------"

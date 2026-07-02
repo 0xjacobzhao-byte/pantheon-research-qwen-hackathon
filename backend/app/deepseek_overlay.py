@@ -15,6 +15,7 @@ from .models import (
     OverlayAssessment,
     OverlayStatus,
     QualitativeOverlay,
+    TokenUsage,
 )
 
 DEEPSEEK_BASE_URL = os.environ.get(
@@ -22,7 +23,23 @@ DEEPSEEK_BASE_URL = os.environ.get(
 )
 DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
 
+# Versioned to match the Qwen overlay contract so comparisons are apples-to-apples.
+PROMPT_VERSION = "deepseek-overlay-v1.1"
+OUTPUT_SCHEMA_VERSION = "overlay-assessment-1.0"
+
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
+
+
+def _usage_from_response(data: dict) -> "TokenUsage | None":
+    usage = data.get("usage")
+    if not isinstance(usage, dict):
+        return None
+    return TokenUsage(
+        prompt_tokens=usage.get("prompt_tokens"),
+        completion_tokens=usage.get("completion_tokens"),
+        total_tokens=usage.get("total_tokens"),
+        estimated_cost_usd=None,
+    )
 
 
 def _check_credential() -> bool:
@@ -101,7 +118,9 @@ async def run_deepseek_overlay(
             model=DEEPSEEK_MODEL,
             ticker=evidence.ticker,
             status=OverlayStatus.BLOCKED_BY_MISSING_CREDENTIAL,
-            error_message="DEEPSEEK_API_KEY is not set.",
+            error_message="DEEPSEEK_API_KEY is not set — live DeepSeek call blocked (fail-closed).",
+            prompt_version=PROMPT_VERSION,
+            output_schema_version=OUTPUT_SCHEMA_VERSION,
         )
 
     prompt = _build_prompt(evidence)
@@ -139,6 +158,8 @@ async def run_deepseek_overlay(
                 status=OverlayStatus.PARSE_ERROR,
                 error_message=f"Invalid JSON from model: {parse_exc}",
                 latency_ms=latency_ms,
+                prompt_version=PROMPT_VERSION,
+                output_schema_version=OUTPUT_SCHEMA_VERSION,
             )
         latency_ms = int((time.monotonic() - start) * 1000)
 
@@ -160,6 +181,9 @@ async def run_deepseek_overlay(
             takeaway=parsed.get("takeaway", ""),
             assessment=assessment,
             latency_ms=latency_ms,
+            prompt_version=PROMPT_VERSION,
+            output_schema_version=OUTPUT_SCHEMA_VERSION,
+            usage=_usage_from_response(data),
         )
 
     except Exception as exc:
@@ -171,6 +195,8 @@ async def run_deepseek_overlay(
             status=OverlayStatus.API_ERROR,
             error_message=str(exc),
             latency_ms=latency_ms,
+            prompt_version=PROMPT_VERSION,
+            output_schema_version=OUTPUT_SCHEMA_VERSION,
         )
 
 
@@ -196,4 +222,6 @@ def _load_sample_overlay(ticker: str) -> QualitativeOverlay:
         status=OverlayStatus.OFFLINE_SAMPLE,
         takeaway=data.get("takeaway", ""),
         assessment=assessment,
+        prompt_version=PROMPT_VERSION,
+        output_schema_version=OUTPUT_SCHEMA_VERSION,
     )

@@ -10,10 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.alibaba_cloud_proof import get_alibaba_proof, get_qwen_config
 from app.comparison import run_comparison
+from app.data_quality import get_data_quality_report
+from app.evidence_pack import build_evidence_pack
 from app.models import ProjectInfo
 from app.qwen_overlay import run_qwen_overlay
 from app.deepseek_overlay import run_deepseek_overlay
 from app.sample_loader import list_available_tickers, load_evidence
+from app.validation_stub import get_validation_methodology
 
 load_dotenv()
 
@@ -76,7 +79,8 @@ async def get_evidence(ticker: str):
         evidence = load_evidence(ticker)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"No evidence data for ticker: {ticker}")
-    return evidence
+    # Return the provenance-committed evidence pack (evidence + content hash).
+    return build_evidence_pack(evidence)
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +117,10 @@ async def get_comparison(ticker: str):
         evidence = load_evidence(ticker)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"No evidence data for ticker: {ticker}")
-    result = await run_comparison(evidence)
+    pack = build_evidence_pack(evidence)
+    result = await run_comparison(
+        evidence, evidence_hash=pack.provenance.evidence_hash
+    )
     return result
 
 
@@ -170,11 +177,34 @@ async def demo_flow():
 # Alibaba Cloud proof
 # ---------------------------------------------------------------------------
 
+@app.get("/api/proof/alibaba-cloud")
+async def alibaba_cloud_proof():
+    """Canonical deployment-proof path (matches the production backend)."""
+    return get_alibaba_proof()
+
+
 @app.get("/api/alibaba/proof")
 async def alibaba_proof():
+    """Back-compat alias for the deployment proof."""
     return get_alibaba_proof()
 
 
 @app.get("/api/alibaba/qwen-config")
 async def qwen_config():
     return get_qwen_config()
+
+
+# ---------------------------------------------------------------------------
+# Research-Ops mini: data quality & validation methodology
+# ---------------------------------------------------------------------------
+
+@app.get("/api/data-quality")
+async def data_quality():
+    """Public-safe Research-Ops / data-quality governance snapshot."""
+    return get_data_quality_report()
+
+
+@app.get("/api/validation")
+async def validation():
+    """Forward-validation methodology + clearly-labelled illustrative summary."""
+    return get_validation_methodology()

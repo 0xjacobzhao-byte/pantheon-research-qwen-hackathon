@@ -104,12 +104,17 @@ class TestModels:
         assert "human-in-the-loop" in info.safety_statement
 
     def test_alibaba_proof_fields(self):
-        proof = AlibabaCloudProof()
+        from app.alibaba_cloud_proof import get_alibaba_proof
+
+        proof = get_alibaba_proof()
+        assert proof.schema_version == "alibaba-proof-2.0"
         assert proof.cloud_provider == "Alibaba Cloud"
         assert proof.backend_runtime == "Dockerized FastAPI"
         assert proof.reverse_proxy == "Nginx"
-        assert proof.database_service == "Alibaba RDS PostgreSQL-compatible database"
-        assert proof.qwen_provider == "Alibaba DashScope / Qwen Max"
+        assert "DashScope" in proof.qwen_provider
+        # Precise, non-overclaiming database representation.
+        assert proof.database.production_data_migrated is False
+        assert proof.database.connected is None
 
     def test_qwen_config(self):
         cfg = QwenConfig()

@@ -30,9 +30,10 @@ pnpm-debug.log*
 # Frontend build
 frontend/dist/
 
-# IDE
+# IDE / tooling
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~

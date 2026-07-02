@@ -18,7 +18,7 @@ Apache-2.0
 
 1. **Qwen Cloud Integration** — Uses the DashScope API in OpenAI-compatible mode to generate structured qualitative equity analysis with 7 assessment fields
 2. **Dual-Provider Comparison** — Runs Qwen Cloud and DeepSeek concurrently, rendering outputs side-by-side with agreement scoring, tone classification, and divergence detection
-3. **Alibaba Cloud Deployment** — Backend designed for Alibaba Cloud with Dockerized FastAPI, Nginx reverse proxy, and Alibaba RDS PostgreSQL-compatible database
+3. **Alibaba Cloud Deployment** — Dockerized FastAPI behind Nginx, live on an Alibaba Cloud ECS box; host is reported honestly via `alibaba_hosted`. Database claim is precise: RDS provisioning is not conflated with production-data migration (the offline demo needs no database)
 4. **Structured Output** — LLM responses are parsed into standardized assessment fields: `business_quality`, `moat`, `pricing_power`, `capital_allocation`, `red_flags`, `confidence`, `missing_evidence`
 5. **Truthful Error Handling** — Missing credentials are surfaced as `BLOCKED_BY_MISSING_CREDENTIAL`, never faked
 6. **Human-in-the-Loop** — LLMs never execute trades; human remains portfolio manager
@@ -32,13 +32,14 @@ Apache-2.0
 
 ## Alibaba Cloud Integration
 
-| Component | Service |
-|-----------|---------|
+| Component | Detail |
+|-----------|--------|
 | Cloud Provider | Alibaba Cloud |
 | Backend Runtime | Dockerized FastAPI |
 | Reverse Proxy | Nginx |
-| Database | Alibaba RDS PostgreSQL-compatible database |
-| LLM Provider | Alibaba DashScope / Qwen Max |
+| Compute Host | Honest via `alibaba_hosted` (same image on Railway + Alibaba ECS) |
+| Database | PostgreSQL (Alibaba RDS-compatible) — production only; migration not asserted |
+| LLM Provider | Alibaba Cloud DashScope (Model Studio) · `qwen-plus` |
 
 ## API Endpoints
 

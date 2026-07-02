@@ -187,3 +187,56 @@ footer {
 }
 footer a { color: var(--accent); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
+
+/* ---------- Proof v2 ---------- */
+.proof-schema { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
+.proof-schema code, .oc-hash, code { background: var(--surface2); padding: 0.05rem 0.35rem; border-radius: 4px; font-size: 0.8rem; }
+.host-flag { font-size: 0.75rem; margin-left: 0.35rem; }
+.proof-db-note {
+  margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted);
+  background: rgba(180,83,9,0.12); border-left: 3px solid var(--warning);
+  padding: 0.6rem 0.75rem; border-radius: 4px;
+}
+.proof-claims { margin-top: 0.75rem; }
+.proof-claims summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; }
+.claims-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.75rem; }
+.claims-grid h4 { font-size: 0.85rem; margin-bottom: 0.35rem; }
+.claims-grid ul { padding-left: 1.1rem; font-size: 0.82rem; color: var(--text-muted); }
+.claims-grid li { margin-bottom: 0.35rem; }
+
+/* ---------- Data quality panel ---------- */
+.dq-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+.dq-metric { display: flex; flex-direction: column; gap: 0.15rem; }
+.dq-metric .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.dq-metric .value { font-size: 0.9rem; display: flex; align-items: center; }
+.dq-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.4rem; }
+.dq-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.dq-table th, .dq-table td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); }
+.dq-table th { color: var(--text-muted); font-weight: 600; }
+.dq-note { margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+
+/* ---------- Overlay comparison panel ---------- */
+.oc-headline { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1rem; align-items: center; }
+.oc-headline-item { display: flex; flex-direction: column; gap: 0.2rem; }
+.oc-headline-item .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.oc-agreement { font-size: 1.15rem; font-weight: 700; }
+.oc-review { font-size: 0.95rem; font-weight: 700; }
+.oc-review-banner {
+  background: rgba(220,38,38,0.12); border: 1px solid var(--error);
+  color: #fca5a5; padding: 0.6rem 0.85rem; border-radius: 6px;
+  font-size: 0.85rem; margin-bottom: 1rem;
+}
+.provider-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.provider-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+.provider-card-header { border-top: 3px solid var(--accent); padding-top: 0.6rem; margin-bottom: 0.75rem; }
+.provider-title-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.provider-title-row h3 { margin: 0; }
+.provider-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.35rem; font-size: 0.78rem; color: var(--text-muted); }
+.provider-versions { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.3rem; }
+.fail-closed { margin: 0.5rem 0; }
+.oc-section { margin-top: 1.25rem; }
+.oc-muted { color: var(--text-muted); font-size: 0.85rem; font-style: italic; }
+@media (max-width: 720px) {
+  .provider-cards, .claims-grid { grid-template-columns: 1fr; }
+  .dq-table { display: block; overflow-x: auto; }
+}
