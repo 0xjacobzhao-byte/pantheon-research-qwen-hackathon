@@ -55,6 +55,14 @@ check "alibaba proof (v2)" "$BASE/api/proof/alibaba-cloud"      '.schema_version
 check "proof host honest"  "$BASE/api/proof/alibaba-cloud"      '.host_runtime'      "."
 check "proof db precise"   "$BASE/api/proof/alibaba-cloud"      '.database.production_data_migrated' "false"
 
+check "provider health"    "$BASE/api/provider-health"             '.qwen.provider'      "Alibaba"
+check "validation timeline" "$BASE/api/validation-timeline"          '.stages[0].name'      "Signal"
+check "ticker profiles"     "$BASE/api/ticker-profiles"              '.tickers[0]'          "."
+check "ticker profile NVDA" "$BASE/api/ticker-profile/NVDA"          '.company_name'       "NVIDIA"
+check "mini macro"          "$BASE/api/mini/macro"                   '.data_state'         "CONTEXT"
+check "mini market pulse"   "$BASE/api/mini/market-pulse"            '.data_state'         "CONTEXT"
+check "mini ficc"           "$BASE/api/mini/ficc"                    '.data_state'         "CONTEXT"
+
 echo
 echo "== Live Alibaba Cloud ECS proof @ $ALIBABA (best-effort; production backend) =="
 softcheck "alibaba live proof" "$ALIBABA/api/proof/alibaba-cloud" '.cloud_provider' "Alibaba"

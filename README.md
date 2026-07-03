@@ -1,6 +1,6 @@
 # Pantheon Research — Qwen Cloud Hackathon
 
-> Dual-LLM equity qualitative overlay: Qwen Cloud vs DeepSeek side-by-side comparison with agreement scoring, fail-closed LLM handling, evidence provenance, and a human-review gate.
+> Dual-LLM equity qualitative overlay: Qwen via Alibaba Cloud Model Studio / DashScope vs DeepSeek side-by-side comparison with agreement scoring, fail-closed LLM handling, evidence provenance, and a human-review gate.
 
 A sanitized, judge-facing vertical slice of the private Pantheon Research
 production system — cloud deployment, data governance, dual-model comparison,
@@ -53,6 +53,11 @@ curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
 | Production mapping | [docs/production_architecture_mapping.md](docs/production_architecture_mapping.md) |
 | Judge walkthrough | [docs/judge_walkthrough.md](docs/judge_walkthrough.md) |
 | Safe claims & non-claims | [docs/safe_claims.md](docs/safe_claims.md) |
+| Provider health panel | [`backend/app/provider_health.py`](backend/app/provider_health.py) · [`ProviderHealthPanel.tsx`](frontend/src/components/ProviderHealthPanel.tsx) |
+| Validation timeline | [`backend/app/validation_timeline.py`](backend/app/validation_timeline.py) · [`ValidationTimeline.tsx`](frontend/src/components/ValidationTimeline.tsx) |
+| Ticker profile (KPI cards) | [`backend/app/ticker_profile.py`](backend/app/ticker_profile.py) · [`TickerProfilePanel.tsx`](frontend/src/components/TickerProfilePanel.tsx) |
+| Mini panels (Macro/TA/FICC) | [`backend/app/mini_panels.py`](backend/app/mini_panels.py) · [frontend/src/components/](frontend/src/components/) |
+| Multilingual workflow | [docs/multilingual_research_workflow.md](docs/multilingual_research_workflow.md) |
 | Validation methodology | [docs/validation_methodology.md](docs/validation_methodology.md) |
 
 ### What this repo claims (and does not)
@@ -118,6 +123,19 @@ This project integrates with **Qwen Cloud** via Alibaba Cloud's DashScope API in
 **Default mode is offline** — no API key required. The app uses bundled sample data in `data/`. Set `DEMO_MODE=live` and provide `DASHSCOPE_API_KEY` for live API calls.
 
 See [docs/qwen_integration.md](docs/qwen_integration.md) for details.
+
+### Qwen Coverage (Production Backfill)
+
+| Metric | Value |
+|--------|-------|
+| Qwen comparison-capable coverage | 312 tickers |
+| Markets | US / China / Hong Kong / Singapore |
+| Qwen split | US 117 / CN 69 / HK 103 / SG 23 |
+| Healthy comparisons | 312 / 312 |
+| DeepSeek baseline universe | 1,331 |
+| Full-universe parity | not pursued; low-liquidity tail intentionally excluded |
+
+**Qwen model naming:** Qwen via Alibaba Cloud Model Studio / DashScope (runtime model is configurable — public demo default: `qwen-plus`; live Alibaba proof: `qwen3.7-plus`; production backfill provenance: `qwen3.7-max`).
 
 ## Alibaba Cloud Integration
 
@@ -268,6 +286,13 @@ docker-compose up --build
 | GET | `/api/proof/alibaba-cloud` | Alibaba Cloud deployment proof (v2, canonical) |
 | GET | `/api/alibaba/proof` | Deployment proof (back-compat alias) |
 | GET | `/api/alibaba/qwen-config` | Qwen / DashScope configuration |
+| GET | `/api/ticker-profile/{ticker}` | Ticker profile with KPI cards (Valuation/Quality/Growth/Anchors/Technical) |
+| GET | `/api/ticker-profiles` | List available ticker profiles |
+| GET | `/api/provider-health` | Provider health snapshot (Qwen, DeepSeek, system status) |
+| GET | `/api/validation-timeline` | Signal lifecycle timeline (capture → forward validation) |
+| GET | `/api/mini/macro` | Macro regime mini panel (context-only) |
+| GET | `/api/mini/market-pulse` | Market Pulse / TA mini panel (context-only) |
+| GET | `/api/mini/ficc` | FICC mini panel — FI/FX/Commodity (context-only) |
 
 ## Demo Flow
 
@@ -322,6 +347,13 @@ engages.
 cd backend
 python -m pytest
 ```
+
+## Complete Production Codebase
+
+The complete production codebase lives in the private Pantheon Research repository:
+https://github.com/0xjacobzhao-byte/Pantheon-Research
+
+It remains closed-source for now to protect proprietary trading-strategy IP, provider integrations, operational runbooks, and production data infrastructure. If Qwen Hackathon judges need to inspect the full production repository for verification, Jacob Zhao can provide temporary private access on request.
 
 ## Public Demo Repository
 

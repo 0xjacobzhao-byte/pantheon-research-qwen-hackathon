@@ -223,3 +223,190 @@ export const fetchAlibabaProof = () =>
 export const fetchQwenConfig = () => getJson<QwenConfig>("/alibaba/qwen-config");
 export const fetchDataQuality = () => getJson<DataQualityReport>("/data-quality");
 export const fetchModules = () => getJson<ModuleSnapshotGridData>("/modules");
+
+// ---------------------------------------------------------------------------
+// Ticker Profile
+// ---------------------------------------------------------------------------
+
+export interface KpiMetric {
+  name: string;
+  value: string | number;
+  signal: string;
+}
+
+export interface KpiCard {
+  label: string;
+  metrics: KpiMetric[];
+  summary: string;
+}
+
+export interface EvidencePackSummary {
+  sources: number;
+  hash_prefix: string;
+  as_of: string;
+  fields_covered: string[];
+}
+
+export interface HumanReviewStatus {
+  status: string;
+  reason: string | null;
+  queue_position: string | null;
+}
+
+export interface TickerProfile {
+  ticker: string;
+  company_name: string;
+  exchange: string;
+  sector: string;
+  industry: string;
+  market_cap_usd: number;
+  kpi_cards: {
+    valuation: KpiCard;
+    quality: KpiCard;
+    growth: KpiCard;
+    anchors: KpiCard;
+    technical: KpiCard;
+  };
+  evidence_pack_summary: EvidencePackSummary;
+  human_review: HumanReviewStatus;
+}
+
+// ---------------------------------------------------------------------------
+// Provider Health
+// ---------------------------------------------------------------------------
+
+export interface ProviderHealthData {
+  schema_version: string;
+  generated_at_utc: string;
+  demo_mode: string;
+  qwen: {
+    provider: string;
+    configured: boolean;
+    model: string;
+    status: string;
+    fail_closed_active: boolean;
+    live_mode_gated: boolean;
+  };
+  deepseek: {
+    provider: string;
+    configured: boolean;
+    model: string;
+    status: string;
+    fail_closed_active: boolean;
+    live_mode_gated: boolean;
+  };
+  sample_evidence: {
+    present: boolean;
+    tickers: string[];
+    count: number;
+  };
+  alibaba_proof: {
+    documented: boolean;
+    endpoint: string;
+  };
+  offline_mode: {
+    available: boolean;
+    active: boolean;
+  };
+  live_mode: {
+    gated: boolean;
+    requires: string[];
+  };
+  secrets_exposed: boolean;
+  fail_closed_active: boolean;
+  note: string;
+}
+
+// ---------------------------------------------------------------------------
+// Validation Timeline
+// ---------------------------------------------------------------------------
+
+export interface TimelineStage {
+  stage: number;
+  name: string;
+  status: string;
+  description: string;
+  evidence: string;
+}
+
+export interface ValidationTimelineData {
+  schema_version: string;
+  generated_at_utc: string;
+  stance: string;
+  stages: TimelineStage[];
+  non_claims: string[];
+  illustrative_demo_summary: {
+    note: string;
+    cohort: string;
+    signals_captured: number;
+    evidence_hashed: number;
+    models_recorded: number;
+    awaiting_forward_window: number;
+    matured_and_scored: number;
+    performance_claim: string;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Mini Panels (Macro / Market Pulse / FICC)
+// ---------------------------------------------------------------------------
+
+export interface MiniIndicator {
+  name: string;
+  value: string;
+  signal: string;
+  note: string;
+}
+
+export interface MacroMiniPanelData {
+  schema_version: string;
+  generated_at_utc: string;
+  data_state: string;
+  disclaimer: string;
+  regime: Record<string, string>;
+  indicators: MiniIndicator[];
+  headline: string;
+  what_not_to_infer: string;
+}
+
+export interface MarketPulseMiniPanelData {
+  schema_version: string;
+  generated_at_utc: string;
+  data_state: string;
+  disclaimer: string;
+  market: Record<string, string>;
+  indicators: MiniIndicator[];
+  headline: string;
+  what_not_to_infer: string;
+}
+
+export interface FiccMiniPanelData {
+  schema_version: string;
+  generated_at_utc: string;
+  data_state: string;
+  disclaimer: string;
+  fixed_income: Record<string, string>;
+  fx: Record<string, string>;
+  commodity: Record<string, string>;
+  headline: string;
+  what_not_to_infer: string;
+}
+
+// ---------------------------------------------------------------------------
+// New fetch functions
+// ---------------------------------------------------------------------------
+
+export const fetchTickerProfile = (ticker: string) =>
+  getJson<TickerProfile>(`/ticker-profile/${ticker}`);
+export const fetchTickerProfiles = () =>
+  getJson<{ tickers: string[] }>("/ticker-profiles");
+export const fetchProviderHealth = () =>
+  getJson<ProviderHealthData>("/provider-health");
+export const fetchValidationTimeline = () =>
+  getJson<ValidationTimelineData>("/validation-timeline");
+export const fetchMacroMini = () =>
+  getJson<MacroMiniPanelData>("/mini/macro");
+export const fetchMarketPulseMini = () =>
+  getJson<MarketPulseMiniPanelData>("/mini/market-pulse");
+export const fetchFiccMini = () =>
+  getJson<FiccMiniPanelData>("/mini/ficc");

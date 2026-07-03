@@ -7,6 +7,12 @@ import {
   fetchQwenConfig,
   fetchDataQuality,
   fetchModules,
+  fetchTickerProfile,
+  fetchProviderHealth,
+  fetchValidationTimeline,
+  fetchMacroMini,
+  fetchMarketPulseMini,
+  fetchFiccMini,
   type ProjectInfo,
   type DemoFlow,
   type ComparisonResult,
@@ -14,10 +20,22 @@ import {
   type QwenConfig,
   type DataQualityReport,
   type ModuleSnapshotGridData,
+  type TickerProfile,
+  type ProviderHealthData,
+  type ValidationTimelineData,
+  type MacroMiniPanelData,
+  type MarketPulseMiniPanelData,
+  type FiccMiniPanelData,
 } from "./api";
 import OverlayComparisonPanel from "./components/equity/OverlayComparisonPanel";
 import DataQualityPanel from "./components/DataQualityPanel";
 import ModuleSnapshotGrid from "./components/ModuleSnapshotGrid";
+import TickerProfilePanel from "./components/TickerProfilePanel";
+import ProviderHealthPanel from "./components/ProviderHealthPanel";
+import ValidationTimeline from "./components/ValidationTimeline";
+import MacroMiniPanel from "./components/MacroMiniPanel";
+import MarketPulseMiniPanel from "./components/MarketPulseMiniPanel";
+import FiccMiniPanel from "./components/FiccMiniPanel";
 
 const TICKERS = ["MA", "NVDA"];
 
@@ -28,8 +46,14 @@ function App() {
   const [qwenCfg, setQwenCfg] = useState<QwenConfig | null>(null);
   const [dataQuality, setDataQuality] = useState<DataQualityReport | null>(null);
   const [modules, setModules] = useState<ModuleSnapshotGridData | null>(null);
+  const [providerHealth, setProviderHealth] = useState<ProviderHealthData | null>(null);
+  const [timeline, setTimeline] = useState<ValidationTimelineData | null>(null);
+  const [macro, setMacro] = useState<MacroMiniPanelData | null>(null);
+  const [marketPulse, setMarketPulse] = useState<MarketPulseMiniPanelData | null>(null);
+  const [ficc, setFicc] = useState<FiccMiniPanelData | null>(null);
   const [selected, setSelected] = useState<string>("");
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
+  const [tickerProfile, setTickerProfile] = useState<TickerProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,14 +64,25 @@ function App() {
     fetchQwenConfig().then(setQwenCfg).catch(() => {});
     fetchDataQuality().then(setDataQuality).catch(() => {});
     fetchModules().then(setModules).catch(() => {});
+    fetchProviderHealth().then(setProviderHealth).catch(() => {});
+    fetchValidationTimeline().then(setTimeline).catch(() => {});
+    fetchMacroMini().then(setMacro).catch(() => {});
+    fetchMarketPulseMini().then(setMarketPulse).catch(() => {});
+    fetchFiccMini().then(setFicc).catch(() => {});
   }, []);
 
   const handleCompare = useCallback(async () => {
     if (!selected) return;
     setLoading(true);
     setError(null);
+    setTickerProfile(null);
     try {
-      setComparison(await fetchComparison(selected));
+      const [comp, profile] = await Promise.all([
+        fetchComparison(selected),
+        fetchTickerProfile(selected).catch(() => null),
+      ]);
+      setComparison(comp);
+      setTickerProfile(profile);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -62,8 +97,8 @@ function App() {
       <header className="hero">
         <h1>Pantheon Research — Qwen Cloud Hackathon</h1>
         <p className="subtitle">
-          Dual-LLM Equity Qualitative Overlay: Qwen Cloud vs DeepSeek, with
-          agreement scoring, fail-closed handling, and a human-review gate.
+          Dual-LLM Equity Qualitative Overlay: Qwen via Alibaba Cloud Model Studio / DashScope vs DeepSeek,
+          with agreement scoring, fail-closed handling, and a human-review gate.
         </p>
         {project && (
           <p className="demo-mode">
@@ -106,6 +141,29 @@ function App() {
             each module's honest governance state — not just the Qwen overlay.
           </p>
           <ModuleSnapshotGrid grid={modules} />
+        </section>
+      )}
+
+      {/* Multi-asset context mini panels */}
+      {(macro || marketPulse || ficc) && (
+        <section className="card">
+          <h2>Multi-Asset Context (Context-Only)</h2>
+          <p className="section-lead">
+            Illustrative panels showing the shape of Pantheon Research's Macro, TA, and FICC modules.
+            Not investment advice. Values are bundled samples, not live feeds.
+          </p>
+          <div className="mini-panels-grid">
+            {macro && <MacroMiniPanel data={macro} />}
+            {marketPulse && <MarketPulseMiniPanel data={marketPulse} />}
+            {ficc && <FiccMiniPanel data={ficc} />}
+          </div>
+        </section>
+      )}
+
+      {/* Provider Health */}
+      {providerHealth && (
+        <section className="card">
+          <ProviderHealthPanel data={providerHealth} />
         </section>
       )}
 
@@ -219,6 +277,13 @@ function App() {
         </section>
       )}
 
+      {/* Validation Timeline */}
+      {timeline && (
+        <section className="card">
+          <ValidationTimeline data={timeline} />
+        </section>
+      )}
+
       {/* Ticker panel */}
       <section className="card">
         <h2>Run a Dual-Model Comparison</h2>
@@ -242,6 +307,14 @@ function App() {
         </div>
         {error && <div className="error-box">{error}</div>}
       </section>
+
+      {/* Ticker Profile (production-feel) */}
+      {tickerProfile && (
+        <section className="card">
+          <h2>Ticker Profile</h2>
+          <TickerProfilePanel profile={tickerProfile} />
+        </section>
+      )}
 
       {/* Evidence pack */}
       {ev && (
@@ -283,7 +356,7 @@ function App() {
       {/* Dual-model comparison */}
       {comparison && (
         <section className="card">
-          <h2>Qwen Cloud vs DeepSeek — Overlay Comparison</h2>
+          <h2>Qwen vs DeepSeek — Overlay Comparison</h2>
           <OverlayComparisonPanel comparison={comparison} />
         </section>
       )}

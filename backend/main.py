@@ -18,6 +18,10 @@ from app.deepseek_overlay import run_deepseek_overlay
 from app.sample_loader import list_available_tickers, load_evidence
 from app.sample_modules import get_module_snapshots
 from app.validation_stub import get_validation_methodology
+from app.provider_health import get_provider_health
+from app.ticker_profile import load_ticker_profile, list_profile_tickers
+from app.validation_timeline import get_validation_timeline
+from app.mini_panels import get_macro_mini_panel, get_market_pulse_mini_panel, get_ficc_mini_panel
 
 load_dotenv()
 
@@ -215,3 +219,64 @@ async def validation():
 async def modules():
     """Module snapshot grid — full research-system scope (context-only samples)."""
     return get_module_snapshots()
+
+
+# ---------------------------------------------------------------------------
+# Ticker profile (production-feel demo)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/ticker-profile/{ticker}")
+async def ticker_profile(ticker: str):
+    """Production-feel ticker profile with KPI cards (sample-backed only)."""
+    try:
+        return load_ticker_profile(ticker)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"No ticker profile for: {ticker}")
+
+
+@app.get("/api/ticker-profiles")
+async def ticker_profiles_list():
+    """List available ticker profiles."""
+    return {"tickers": list_profile_tickers()}
+
+
+# ---------------------------------------------------------------------------
+# Provider health
+# ---------------------------------------------------------------------------
+
+@app.get("/api/provider-health")
+async def provider_health():
+    """Public-safe provider health snapshot (no secrets)."""
+    return get_provider_health()
+
+
+# ---------------------------------------------------------------------------
+# Validation timeline
+# ---------------------------------------------------------------------------
+
+@app.get("/api/validation-timeline")
+async def validation_timeline():
+    """Signal lifecycle timeline (illustrative, no alpha claims)."""
+    return get_validation_timeline()
+
+
+# ---------------------------------------------------------------------------
+# Mini panels: Macro / Market Pulse / FICC
+# ---------------------------------------------------------------------------
+
+@app.get("/api/mini/macro")
+async def mini_macro():
+    """Macro regime mini panel (context-only, no live feed)."""
+    return get_macro_mini_panel()
+
+
+@app.get("/api/mini/market-pulse")
+async def mini_market_pulse():
+    """Market Pulse / TA mini panel (context-only, no trade signal)."""
+    return get_market_pulse_mini_panel()
+
+
+@app.get("/api/mini/ficc")
+async def mini_ficc():
+    """FICC mini panel (context-only, no position)."""
+    return get_ficc_mini_panel()
