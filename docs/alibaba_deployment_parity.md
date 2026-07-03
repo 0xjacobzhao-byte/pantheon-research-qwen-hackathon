@@ -16,6 +16,20 @@ claim can be verified and is not overstated.
 | AI provider | **Alibaba Cloud Model Studio / DashScope (Qwen)** | `POST /api/proof/qwen-smoke` returns a live Qwen-generated summary |
 | Frontend | Full production SPA, built from private `master` (parity target: Vercel) | served at `/` by Nginx |
 
+### Alibaba service map (structured, secret-free)
+
+The v2 proof endpoint also returns a structured `alibaba_services` map covering
+three Alibaba Cloud products:
+
+| Service | Product | Evidence |
+| --- | --- | --- |
+| **Compute** | Alibaba Cloud ECS | `host_runtime` + `alibaba_hosted` runtime marker |
+| **AI** | Alibaba Cloud Model Studio / DashScope | `base_url`, `model`, `credential_configured`, `live_smoke_endpoint`, `actual_call_implementation` |
+| **Database** | Alibaba RDS PostgreSQL-compatible | `role: selected evidence mirror`, `mirror_state: partial_selected_mirror` |
+
+The actual Qwen / DashScope API call implementation lives in
+[`backend/app/qwen_overlay.py`](../backend/app/qwen_overlay.py).
+
 The proof endpoint reports **booleans only** for configuration
 (`qwen_configured`, `dashscope_api_key_configured`, `database_url_configured`) —
 never secret values — and honestly labels the host runtime.
@@ -63,8 +77,12 @@ See [`live_proof.md`](live_proof.md) for captured real responses.
 
 > "The Pantheon Research backend is deployed on Alibaba Cloud ECS (Nginx →
 > Dockerized FastAPI) and calls Qwen live via Alibaba Cloud Model Studio /
-> DashScope, provable at a public proof endpoint. An Alibaba RDS
-> PostgreSQL-compatible instance is provisioned as part of the architecture, but
-> RDS **provisioning/connection is distinguished from full production-data
+> DashScope, provable at a public proof endpoint. The proof code lives in
+> [`backend/app/alibaba_cloud_proof.py`](../backend/app/alibaba_cloud_proof.py)
+> and the Qwen call implementation in
+> [`backend/app/qwen_overlay.py`](../backend/app/qwen_overlay.py). An Alibaba
+> RDS PostgreSQL-compatible instance is provisioned as part of the architecture
+> as a **selected evidence mirror** (`mirror_state: partial_selected_mirror`),
+> but RDS **provisioning/connection is distinguished from full production-data
 > migration** — migration is claimed only when row counts and API read-path are
 > verified. The production research-data platform remains on Railway/Vercel."

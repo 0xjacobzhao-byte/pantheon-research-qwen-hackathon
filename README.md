@@ -172,9 +172,11 @@ production-data migration is not claimed** (`production_data_migrated: false`,
   "provider": "PostgreSQL (Alibaba RDS-compatible target engine)",
   "configured": false,            // true only when DATABASE_URL is set in this runtime
   "connected": null,              // not probed — the proof makes no external call
-  "role": "Metadata / evidence store in production; the offline demo needs no DB",
+  "role": "Selected evidence mirror in production; the offline demo runs against bundled samples and needs no DB",
+  "mirror_state": "partial_selected_mirror",
   "production_data_migrated": false,
-  "note": "Alibaba RDS provisioning is distinct from full production-data migration; migration is not claimed without row-count and read-path verification."
+  "full_production_clone_verified": false,
+  "note": "Alibaba RDS is deployed and connected as a selected evidence mirror in the live ECS deployment. This offline proof endpoint performs no DB probe, so connected is null here. Full production-data migration is not claimed without core row counts and API read-path verification."
 }
 ```
 
@@ -189,6 +191,16 @@ Judges can verify Qwen is called live from Alibaba Cloud — see
 examples, and captured live responses (deployment proof + a real Qwen smoke
 call). A redacted live-call artifact is committed at
 [`data/qwen_live_smoke_sample_redacted.json`](data/qwen_live_smoke_sample_redacted.json).
+
+The primary deployment-proof file is:
+
+[`backend/app/alibaba_cloud_proof.py`](backend/app/alibaba_cloud_proof.py)
+
+It proves the host/runtime, secret-free credential state, Alibaba ECS/RDS/DashScope service map, and safe/non-claims.
+
+The actual Qwen / DashScope API call implementation lives in:
+
+[`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py)
 
 ## Architecture
 

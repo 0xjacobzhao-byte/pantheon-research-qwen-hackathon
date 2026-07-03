@@ -39,6 +39,29 @@ secrets). Abridged; the full captured payload is committed at
   "qwen_configured": true,
   "dashscope_api_key_configured": true,
   "database_url_configured": true,
+  "alibaba_services": {
+    "compute": {
+      "service": "Alibaba Cloud ECS",
+      "evidence": "host_runtime + alibaba_hosted runtime marker",
+      "host_runtime": "Alibaba Cloud ECS",
+      "alibaba_hosted": true
+    },
+    "ai": {
+      "service": "Alibaba Cloud Model Studio / DashScope",
+      "base_url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+      "model": "qwen3.7-plus",
+      "credential_configured": true,
+      "live_smoke_endpoint": "/api/proof/qwen-smoke",
+      "actual_call_implementation": "backend/app/qwen_overlay.py"
+    },
+    "database": {
+      "service": "Alibaba RDS PostgreSQL-compatible",
+      "role": "selected evidence mirror",
+      "mirror_state": "partial_selected_mirror",
+      "production_data_migrated": false,
+      "full_production_clone_verified": false
+    }
+  },
   "database": {
     "provider": "Alibaba RDS PostgreSQL-compatible",
     "configured": true,
@@ -52,6 +75,11 @@ secrets). Abridged; the full captured payload is committed at
   "timestamp_utc": "2026-07-02T22:50:30Z"
 }
 ```
+
+The `alibaba_services` block is a structured, secret-free service map covering
+compute (ECS), AI (Model Studio / DashScope), and database (RDS). Each service
+entry names the Alibaba Cloud product, the evidence type, and the relevant
+configuration state — never a credential value.
 
 On the live ECS box the RDS block reports `connected: true` (an operator-attested
 session). The public offline backend in *this* repo makes no probe, so its own
@@ -149,3 +177,16 @@ two providers.
 - **Qwen is called live** via Alibaba Cloud Model Studio (DashScope) — provable
   with the smoke endpoint.
 - No secrets are exposed anywhere in the repo or the proof responses.
+
+## 5. Primary proof files
+
+The primary deployment-proof file is:
+
+[`backend/app/alibaba_cloud_proof.py`](../backend/app/alibaba_cloud_proof.py)
+
+It proves the host/runtime, secret-free credential state, Alibaba ECS/RDS/DashScope
+service map, and safe/non-claims.
+
+The actual Qwen / DashScope API call implementation lives in:
+
+[`backend/app/qwen_overlay.py`](../backend/app/qwen_overlay.py)

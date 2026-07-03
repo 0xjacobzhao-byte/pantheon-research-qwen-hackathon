@@ -88,15 +88,17 @@ def _database_proof() -> DatabaseProof:
         configured=configured,
         connected=None,
         role=(
-            "Metadata / evidence store in production; the public offline demo "
+            "Selected evidence mirror in production; the public offline demo "
             "runs against bundled samples and needs no database."
         ),
+        mirror_state="partial_selected_mirror",
         production_data_migrated=False,
+        full_production_clone_verified=False,
         note=(
-            "This endpoint makes no external calls, so live DB connectivity is "
-            "not asserted (connected=null). Alibaba RDS provisioning is distinct "
-            "from full production-data migration; migration is not claimed here "
-            "without row-count and API read-path verification."
+            "Alibaba RDS is deployed and connected as a selected evidence mirror "
+            "in the live ECS deployment. This offline proof endpoint performs no "
+            "DB probe, so connected is null here. Full production-data migration "
+            "is not claimed without core row counts and API read-path verification."
         ),
     )
 
@@ -116,6 +118,29 @@ def get_alibaba_proof() -> AlibabaCloudProof:
         region=os.environ.get("ALIBABA_REGION", _DEFAULT_REGION),
         git_sha=_git_sha(),
         timestamp_utc=_utc_now_iso(),
+        alibaba_services={
+            "compute": {
+                "service": "Alibaba Cloud ECS",
+                "evidence": "host_runtime + alibaba_hosted runtime marker",
+                "host_runtime": host["host_runtime"],
+                "alibaba_hosted": host["alibaba_hosted"],
+            },
+            "ai": {
+                "service": "Alibaba Cloud Model Studio / DashScope",
+                "base_url": QWEN_BASE_URL,
+                "model": QWEN_MODEL,
+                "credential_configured": dashscope_configured,
+                "live_smoke_endpoint": "/api/proof/qwen-smoke",
+                "actual_call_implementation": "backend/app/qwen_overlay.py",
+            },
+            "database": {
+                "service": "Alibaba RDS PostgreSQL-compatible",
+                "role": "selected evidence mirror",
+                "mirror_state": "partial_selected_mirror",
+                "production_data_migrated": False,
+                "full_production_clone_verified": False,
+            },
+        },
         proof_endpoints={
             "deployment_proof": "/api/proof/alibaba-cloud",
             "deployment_proof_alias": "/api/alibaba/proof",
@@ -128,8 +153,11 @@ def get_alibaba_proof() -> AlibabaCloudProof:
         },
         database=_database_proof(),
         safe_claims=[
-            "Qwen is invoked live via Alibaba Cloud DashScope (Model Studio) "
+            "The Qwen / DashScope integration is implemented in "
+            "backend/app/qwen_overlay.py and is invoked by overlay endpoints "
             "when DEMO_MODE=live and DASHSCOPE_API_KEY is set.",
+            "The live Alibaba ECS deployment also exposes an admin-gated "
+            "/api/proof/qwen-smoke endpoint that performs a real Qwen smoke call.",
             "The same container image runs on Railway and on an Alibaba Cloud "
             "ECS host; the compute host is reported honestly via alibaba_hosted.",
             "No secrets are returned; credentials are reported as booleans only "

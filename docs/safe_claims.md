@@ -8,8 +8,11 @@ overclaim.
 
 1. **Qwen is called live** via Alibaba Cloud DashScope (Model Studio),
    OpenAI-compatible endpoint, when live mode is enabled
-   (`DEMO_MODE=live` + `DASHSCOPE_API_KEY`). Code:
-   [`backend/app/qwen_overlay.py`](../backend/app/qwen_overlay.py).
+   (`DEMO_MODE=live` + `DASHSCOPE_API_KEY`). The integration is implemented in
+   [`backend/app/qwen_overlay.py`](../backend/app/qwen_overlay.py) and is invoked
+   by overlay endpoints (not by the proof endpoint itself, which makes no external
+   calls). The live Alibaba ECS deployment also exposes an admin-gated
+   `/api/proof/qwen-smoke` endpoint that performs a real Qwen smoke call.
 2. **The backend runs live on Alibaba Cloud ECS** (Nginx → Dockerized FastAPI),
    reachable at `http://8.222.191.152`, with a public proof endpoint and an
    admin-gated live Qwen smoke. See [`live_proof.md`](live_proof.md).
@@ -56,4 +59,15 @@ overclaim.
 | Dual-model + fail-closed | `./scripts/judge_smoke.sh` · `backend/tests/test_qwen_fail_closed.py` |
 | Evidence hashing | `GET /api/evidence/NVDA` → `provenance.evidence_hash` |
 | Multi-asset scope | `GET /api/modules` · [`module_snapshots.md`](module_snapshots.md) |
+| Alibaba service map | `GET /api/proof/alibaba-cloud` → `alibaba_services{}` (compute/ai/database) |
 | No secrets | CI `secret-scan-lite` job · `docs/data_safety.md` |
+
+## Primary proof files
+
+The primary deployment-proof file is
+[`backend/app/alibaba_cloud_proof.py`](../backend/app/alibaba_cloud_proof.py).
+It proves the host/runtime, secret-free credential state, Alibaba
+ECS/RDS/DashScope service map, and safe/non-claims.
+
+The actual Qwen / DashScope API call implementation lives in
+[`backend/app/qwen_overlay.py`](../backend/app/qwen_overlay.py).
