@@ -192,6 +192,8 @@ call). A redacted live-call artifact is committed at
 
 ## Architecture
 
+![Pantheon Research High-Level Architecture](docs/assets/architecture_high_level.png)
+
 ```
 ┌──────────────────────────────┐
 │       Frontend (React)       │

@@ -4,6 +4,11 @@ Visual and captured-artifact assets for the README and judging docs.
 
 ## Captured (committed)
 
+- **[`architecture_high_level.png`](architecture_high_level.png)** — Pantheon Research
+  high-level architecture diagram showing all 7 layers: external data sources,
+  data platform, strategy engines, deterministic + LLM layer, information layer,
+  signal layer, and trading layer. Includes Alibaba Cloud stack integration and
+  Qwen via DashScope dual-model overlay workflow.
 - **[`alibaba_live_proof.json`](alibaba_live_proof.json)** — a real, unmodified
   capture of the live Alibaba Cloud proof endpoint
   (`GET http://8.222.191.152/api/proof/alibaba-cloud`). Booleans only, no
@@ -30,6 +35,7 @@ the README will reference them once present.
   at the top of the demo cockpit.
 - [ ] `data_quality_panel.png` — DataQualityPanel (Research-Ops · Data Quality):
   provider config, coverage, per-ticker data_state table.
+- [x] `architecture_high_level.png` — **done** (high-level architecture diagram, 7 layers)
 - [ ] `alibaba_live_proof.png` — browser view of the live proof JSON
   (the JSON itself is already committed as `alibaba_live_proof.json`).
 - [ ] `judge_quickstart.png` — terminal running `./scripts/judge_smoke.sh` all green.
