@@ -6,6 +6,8 @@ A sanitized, judge-facing vertical slice of the private Pantheon Research
 production system — cloud deployment, data governance, dual-model comparison,
 and product-grade UI. Not an API wrapper.
 
+> **Judges:** start with [`docs/judge_evidence.md`](docs/judge_evidence.md) for a 3-minute verification path covering Alibaba ECS, DashScope/Qwen, RDS selected mirror, fail-closed model handling, and reproducible local smoke tests.
+
 ## Submission
 
 | | Link |
@@ -42,6 +44,9 @@ curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
 
 | What | Where |
 |------|-------|
+| **Judge evidence guide** | **[`docs/judge_evidence.md`](docs/judge_evidence.md)** |
+| **Proof bundle (JSON)** | **[`data/judge_proof_bundle.json`](data/judge_proof_bundle.json)** |
+| **Actual Qwen API call** | **[`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py)** |
 | Alibaba proof code (v2) | [`backend/app/alibaba_cloud_proof.py`](backend/app/alibaba_cloud_proof.py) |
 | Qwen integration code | [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py) |
 | Comparison engine | [`backend/app/comparison.py`](backend/app/comparison.py) |

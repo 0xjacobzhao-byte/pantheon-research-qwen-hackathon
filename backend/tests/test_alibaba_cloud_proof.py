@@ -191,3 +191,97 @@ def test_qwen_config_no_secret():
     assert cfg["prompt_version"]
     assert cfg["output_schema_version"]
     assert "api_key" not in json.dumps(cfg).lower() or cfg["credential_configured"] in (True, False)
+
+
+# -----------------------------------------------------------------------
+# Phase 6 tests: judge_evidence, attestation, enhanced alibaba_services
+# -----------------------------------------------------------------------
+
+REQUIRED_FIELDS_V3 = REQUIRED_FIELDS + ["judge_evidence", "attestation"]
+
+
+def test_proof_has_judge_evidence_and_attestation_fields():
+    proof = get_alibaba_proof().model_dump()
+    for field in REQUIRED_FIELDS_V3:
+        assert field in proof, f"missing field: {field}"
+
+
+def test_judge_evidence_contains_deployment_proof_and_qwen_impl():
+    proof = get_alibaba_proof()
+    je = proof.judge_evidence
+    assert je["deployment_proof_code"] == "backend/app/alibaba_cloud_proof.py"
+    assert je["qwen_api_implementation"] == "backend/app/qwen_overlay.py"
+    assert je["live_proof_url"] == "http://8.222.191.152/api/proof/alibaba-cloud"
+    assert je["live_product_url"] == "https://pantheon-research.com"
+    assert je["alibaba_demo_url"] == "http://8.222.191.152"
+
+
+def test_judge_evidence_qwen_http_call_contains_chat_completions():
+    proof = get_alibaba_proof()
+    assert "/chat/completions" in proof.judge_evidence["qwen_http_call"]
+    assert proof.judge_evidence["qwen_http_call"].startswith("POST ")
+
+
+def test_attestation_proof_endpoint_external_calls_is_false():
+    proof = get_alibaba_proof()
+    assert proof.attestation["proof_endpoint_external_calls"] is False
+
+
+def test_attestation_credential_values_returned_is_false():
+    proof = get_alibaba_proof()
+    assert proof.attestation["credential_values_returned"] is False
+
+
+def test_attestation_secrets_policy():
+    proof = get_alibaba_proof()
+    assert "booleans only" in proof.attestation["secrets_policy"]
+
+
+def test_alibaba_services_ai_includes_openai_compatible():
+    proof = get_alibaba_proof()
+    ai = proof.alibaba_services.get("ai", {})
+    assert ai["api_protocol"] == "OpenAI-compatible chat completions"
+    assert ai["http_method"] == "POST"
+    assert ai["chat_completions_path"] == "/chat/completions"
+    assert "BLOCKED_BY_MISSING_CREDENTIAL" in ai["fail_closed_statuses"]
+    assert "API_ERROR" in ai["fail_closed_statuses"]
+    assert "PARSE_ERROR" in ai["fail_closed_statuses"]
+
+
+def test_alibaba_services_compute_has_public_endpoint():
+    proof = get_alibaba_proof()
+    compute = proof.alibaba_services.get("compute", {})
+    assert compute["reverse_proxy"] == "Nginx"
+    assert compute["backend_runtime"] == "Dockerized FastAPI"
+    assert "8.222.191.152" in compute["public_endpoint"]
+
+
+def test_alibaba_services_database_does_not_claim_production_migration():
+    proof = get_alibaba_proof()
+    database = proof.alibaba_services.get("database", {})
+    assert database["production_data_migrated"] is False
+    assert database["full_production_clone_verified"] is False
+    assert database["mirror_state"] == "partial_selected_mirror"
+    # connected_in_live_ecs is a string, not a boolean true
+    assert isinstance(database["connected_in_live_ecs"], str)
+    assert "not probed" in database["connected_in_live_ecs"].lower()
+
+
+def test_serialized_proof_has_no_secrets_tokens_or_db_urls(monkeypatch):
+    """Comprehensive secret scan on the serialized proof payload."""
+    fake_key = "sk-" + "a1b2c3d4e5f6g7h8i9j0" + "xxxxxxxx"
+    fake_db = "postgres" + "ql://admin:s3cret@" + "rds.aliyuncs.com:5432/prod"
+    fake_admin = "x-admin-token" + ":supersecretadmintoken"
+    monkeypatch.setenv("DASHSCOPE_API_KEY", fake_key)
+    monkeypatch.setenv("DATABASE_URL", fake_db)
+    blob = json.dumps(get_alibaba_proof().model_dump())
+
+    assert fake_key not in blob
+    assert fake_db not in blob
+    assert "s3cret@" not in blob
+    assert "supersecretadmintoken" not in blob
+    assert "rds.aliyuncs.com" not in blob
+    # booleans only
+    p = get_alibaba_proof()
+    assert isinstance(p.dashscope_api_key_configured, bool)
+    assert isinstance(p.qwen_configured, bool)

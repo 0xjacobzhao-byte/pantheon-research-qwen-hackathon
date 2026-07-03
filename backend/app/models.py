@@ -315,6 +315,14 @@ class AlibabaCloudProof(BaseModel):
     database: DatabaseProof
     safe_claims: list[str] = Field(default_factory=list)
     non_claims: list[str] = Field(default_factory=list)
+    judge_evidence: dict = Field(
+        default_factory=dict,
+        description="Quick-reference map for judges: proof code paths, live URLs, verification doc",
+    )
+    attestation: dict = Field(
+        default_factory=dict,
+        description="Explicit attestation: no external calls, no credential values returned, host detection source",
+    )
 
 
 class QwenConfig(BaseModel):
