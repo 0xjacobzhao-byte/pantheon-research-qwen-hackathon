@@ -197,7 +197,7 @@ def test_qwen_config_no_secret():
 # Phase 6 tests: judge_evidence, attestation, enhanced alibaba_services
 # -----------------------------------------------------------------------
 
-REQUIRED_FIELDS_V3 = REQUIRED_FIELDS + ["judge_evidence", "attestation"]
+REQUIRED_FIELDS_V3 = REQUIRED_FIELDS + ["judge_evidence", "attestation", "runtime_mode"]
 
 
 def test_proof_has_judge_evidence_and_attestation_fields():
@@ -285,3 +285,29 @@ def test_serialized_proof_has_no_secrets_tokens_or_db_urls(monkeypatch):
     p = get_alibaba_proof()
     assert isinstance(p.dashscope_api_key_configured, bool)
     assert isinstance(p.qwen_configured, bool)
+
+# -----------------------------------------------------------------------
+# Phase 8 tests: runtime_mode
+# -----------------------------------------------------------------------
+
+def test_runtime_mode_public_repo_default_is_offline_sample():
+    proof = get_alibaba_proof()
+    rm = proof.runtime_mode
+    assert rm["public_repo_default"] == "offline_sample"
+    assert rm["live_alibaba_ecs"] == "live_production_proof"
+
+
+def test_runtime_mode_proof_endpoint_external_calls_is_false():
+    proof = get_alibaba_proof()
+    assert proof.runtime_mode["proof_endpoint_external_calls"] is False
+
+
+def test_runtime_mode_qwen_live_call_location_mentions_admin_gated():
+    proof = get_alibaba_proof()
+    assert "admin-gated" in proof.runtime_mode["qwen_live_call_location"]
+
+
+def test_runtime_mode_database_connectivity_mentions_offline_no_probe():
+    proof = get_alibaba_proof()
+    assert "offline" in proof.runtime_mode["database_connectivity"]
+    assert "not probe" in proof.runtime_mode["database_connectivity"]

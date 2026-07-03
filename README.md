@@ -22,6 +22,40 @@ A sanitized, judge-facing vertical slice of the private Pantheon Research produc
 
 ---
 
+## 3-Minute Judge Path
+
+1. **Verify Alibaba ECS proof**
+   ```bash
+   curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
+   ```
+
+2. **Inspect deployment proof code**
+   [`backend/app/alibaba_cloud_proof.py`](backend/app/alibaba_cloud_proof.py)
+
+3. **Inspect actual Qwen / DashScope API call**
+   [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py)
+
+4. **Run the offline demo locally**
+   ```bash
+   docker compose up --build
+   ./scripts/judge_smoke.sh
+   ```
+
+5. **Read the full evidence guide**
+   [`docs/judge_evidence.md`](docs/judge_evidence.md)
+
+---
+
+## Repository Scope
+
+This public repository is a **sanitized, self-contained hackathon slice**. The complete production codebase lives in the private Pantheon Research repository:
+
+https://github.com/0xjacobzhao-byte/Pantheon-Research
+
+It remains closed-source to protect proprietary trading-strategy IP, provider integrations, operational runbooks, and production data infrastructure. Qwen Hackathon judges may request temporary private access from Jacob Zhao for verification.
+
+---
+
 ## Quick Start
 
 ```bash
@@ -155,6 +189,8 @@ On the **live ECS box**, RDS is deployed and connected (`connected: true`). This
 | Healthy comparisons | **312 / 312** |
 | DeepSeek baseline universe | 1,331 |
 
+Full-universe parity was intentionally not pursued for the public demo. The current Qwen coverage prioritizes liquid, judge-relevant equities across US, China, Hong Kong, and Singapore; low-liquidity tail coverage remains private/backlog.
+
 ---
 
 ## Demo Flow
@@ -279,12 +315,10 @@ docker compose config                      # validate compose file
 
 ---
 
-## Scope & License
+## Author & License
 
-This repository is a **sanitized public hackathon demo** of Pantheon Research. The complete production codebase lives in the [private repository](https://github.com/0xjacobzhao-byte/Pantheon-Research) (closed-source to protect proprietary trading-strategy IP, provider integrations, and production data infrastructure). Qwen Hackathon judges may request temporary private access from Jacob Zhao.
+**Jacob Zhao** — [0xjacobzhao-byte](https://github.com/0xjacobzhao-byte)
 
-No API keys, private user data, live trading credentials, production secrets, or private financial records are included.
+**License:** Apache-2.0 — see [LICENSE](LICENSE)
 
-**Author:** Jacob Zhao — [0xjacobzhao-byte](https://github.com/0xjacobzhao-byte)
-
-**License:** Apache-2.0 — see [LICENSE](LICENSE).
+No API keys, private user data, live trading credentials, production secrets, or private financial records are included in this repository.

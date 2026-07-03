@@ -204,6 +204,18 @@ def get_alibaba_proof() -> AlibabaCloudProof:
             "qwen_smoke_endpoint": "/api/proof/qwen-smoke",
             "verification_doc": "docs/judge_evidence.md",
         },
+        runtime_mode={
+            "public_repo_default": "offline_sample",
+            "live_alibaba_ecs": "live_production_proof",
+            "proof_endpoint_external_calls": False,
+            "qwen_live_call_location": (
+                "admin-gated /api/proof/qwen-smoke and overlay endpoints"
+            ),
+            "database_connectivity": (
+                "offline proof does not probe; live ECS proof documents "
+                "selected evidence mirror connection"
+            ),
+        },
         attestation={
             "proof_endpoint_external_calls": False,
             "credential_values_returned": False,

@@ -323,6 +323,10 @@ class AlibabaCloudProof(BaseModel):
         default_factory=dict,
         description="Explicit attestation: no external calls, no credential values returned, host detection source",
     )
+    runtime_mode: dict = Field(
+        default_factory=dict,
+        description="Runtime context: public_repo_default vs live_alibaba_ecs, external call policy, live call location",
+    )
 
 
 class QwenConfig(BaseModel):
