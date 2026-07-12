@@ -62,6 +62,9 @@ check "ticker profile NVDA" "$BASE/api/ticker-profile/NVDA"          '.company_n
 check "mini macro"          "$BASE/api/mini/macro"                   '.data_state'         "CONTEXT"
 check "mini market pulse"   "$BASE/api/mini/market-pulse"            '.data_state'         "CONTEXT"
 check "mini ficc"           "$BASE/api/mini/ficc"                    '.data_state'         "CONTEXT"
+check "judge full-demo"     "$BASE/api/judge/full-demo"              '.schema_version'     "judge-full-demo"
+check "judge demo compare"  "$BASE/api/judge/full-demo"              '.comparison.data_state' "."
+check "judge demo claims"   "$BASE/api/judge/full-demo"              '.non_claims[0]'      "."
 
 echo
 echo "== Live Alibaba Cloud ECS proof @ $ALIBABA (best-effort; production backend) =="
