@@ -100,10 +100,9 @@ docker compose up --build          # frontend :5173 · backend :8000
 ```
 
 1. **Open the "Judge Demo / Qwen Proof" tab** at http://localhost:5173 — a
-   product-grade, visual home for the entire judge demo (Alibaba proof, Qwen
-   integration, evidence lineage, signal preview, roadmap, claims ledger).
-   Falls back to a graceful error state, never a blank page, if the backend
-   isn't reachable.
+   product-grade, visual home for the entire judge demo (architecture, Alibaba
+   proof, Qwen integration, evidence lineage, signal preview, roadmap, claims
+   ledger). Fails closed with a graceful error state, never a blank page.
 2. **Or get everything in one call** — the same aggregator, raw:
    ```bash
    curl -s http://localhost:8000/api/judge/full-demo | jq
@@ -130,7 +129,7 @@ https://github.com/0xjacobzhao-byte/Pantheon-Research
 | | **This public repo** | **Private production** |
 |---|---|---|
 | Purpose | Judge-runnable proof of the overlay + governance | The live product |
-| Live LLM path | **Qwen + DeepSeek** (dual-model) | Multi-model (see §8) |
+| Live LLM path | **Qwen + DeepSeek** (dual-model) | Multi-model (see §9) |
 | Data | Bundled, sanitized samples (MA, NVDA) | Governed PostgreSQL platform |
 | Universe | 2 worked demo tickers | Full multi-market coverage |
 | Trading, admin, provider routing, scoring models | Not included | Private |
@@ -139,7 +138,7 @@ https://github.com/0xjacobzhao-byte/Pantheon-Research
 The private repo stays closed to protect proprietary trading-strategy IP,
 provider integrations, operational runbooks, and production data infrastructure.
 **Qwen Hackathon judges may request temporary private access from Jacob Zhao for
-verification.**
+verification.** Full boundary: [`docs/public_private_scope.md`](docs/public_private_scope.md).
 
 > **This public repo does not equal full production.** Where a capability exists
 > only in production, it is labelled *production architecture context*, not a
@@ -159,26 +158,23 @@ verification.**
   threaded through each comparison.
 - A **Research-Ops / data-quality panel**, **provider-health snapshot**, and
   **signal validation timeline** — governance surfaces, not just an answer.
-- A **context-only multi-asset module grid** (Macro · TA · FICC) showing scope.
+- A visual **"Judge Demo / Qwen Proof" cockpit page** — architecture diagrams,
+  Alibaba proof, evidence pack, both overlays, comparison, an **Evidence Lineage**
+  flow, a **Signal Brief Preview** (mock, Telegram-style), a **Productization
+  Roadmap**, and the claims ledger — with a fail-closed error state.
+- A **unified judge aggregator** (`GET /api/judge/full-demo`) and a **mock signal
+  preview** (`GET /api/signal-preview/qwen/{ticker}`) — both read-only, offline,
+  secret-free.
 - A **production-feel React + TypeScript UI**, Dockerized, with an offline mode.
-- A **unified judge aggregator** — `GET /api/judge/full-demo`.
-- A visual **"Judge Demo / Qwen Proof" cockpit page** in the frontend — Alibaba
-  proof, Qwen/DeepSeek config, evidence pack, both overlays, comparison, an
-  **Evidence Lineage** flow diagram, a **Signal Brief Preview** (mock,
-  Telegram-style), a **Productization Roadmap**, and the claims ledger — with a
-  fail-closed error state, never a blank page.
-- A **mock Signal Brief Preview** — `GET /api/signal-preview/qwen/{ticker}` —
-  demonstrating the delivery layer offline, with no real Telegram call.
 
 **In the private production system (architecture context, not claimed for this repo):**
 
 - A **live cross-asset web product** with **mobile / PWA** support and a
   **WeChat Mini Program** launch candidate in progress.
 - A **governed, database-first PostgreSQL platform** — canonical observations,
-  derived/product snapshots, and evidence artifacts, fed by
-  **provider APIs, regulatory filings, web scraping, and on-chain / social
-  integrations** with provider routing, freshness/quality labels, and fail-closed
-  governance.
+  derived/product snapshots, and evidence artifacts, fed by **provider APIs,
+  regulatory filings, web scraping, and on-chain / social integrations** with
+  provider routing, freshness/quality labels, and fail-closed governance.
 - **Deterministic, versioned strategy frameworks** across every research domain.
 - A **five-provider Equity research cockpit** (Claude · ChatGPT · Gemini ·
   DeepSeek · Qwen) with model comparison and disagreement detection.
@@ -190,9 +186,9 @@ verification.**
 
 ---
 
-## 7. Architecture: Strategy → Information → Signal → Trading
+## 7. High-Level Architecture
 
-![Pantheon Research High-Level Architecture](docs/assets/architecture_high_level.png)
+![Pantheon Research High-Level Architecture](docs/assets/pantheon_research_high_level_architecture.png)
 
 Pantheon is **database-first**: research reads from governed, point-in-time
 observations, not from ad-hoc API calls at request time. The pipeline moves
@@ -221,7 +217,58 @@ Pantheon Research is **not** an autonomous trading bot.
 
 ---
 
-## 8. Deterministic + Qwen / DeepSeek LLM Overlay
+## 8. Deployment Architecture
+
+Pantheon runs on **one code source, several deployment substrates, and exactly
+one canonical production writer.**
+
+![Pantheon Research Deployment Architecture](docs/assets/pantheon_deployment_architecture.svg)
+
+- **Vercel + Railway is the primary production path** — Railway is the single
+  canonical writer to the production database.
+- **Google Cloud and Alibaba Cloud are isolated shadow / proof deployments**, not
+  equal production writers. They validate portability, regional deployment,
+  model-provider integration, cost, latency, and observability. **GCP proves the
+  Gemini path; Alibaba proves the Qwen / DashScope path.**
+- **This public repository is a sanitized offline judge demo** — it is not a
+  production deployment and writes to no production database.
+- **Alibaba RDS is a selected evidence mirror, not a full production clone.**
+
+```mermaid
+flowchart TB
+    PGH[Private production repo<br/>master · code source]
+    PGH --> V[Vercel<br/>production frontend]
+    PGH --> R[Railway<br/>production FastAPI · canonical writer]:::writer
+    PGH --> G[GCP Cloud Run<br/>Gemini shadow / proof]:::shadow
+    PGH --> A[Alibaba Cloud<br/>Qwen shadow / proof]:::shadow
+    V --> R
+    R --> DB[(Canonical PostgreSQL)]
+    R --> JOBS[Production jobs / scheduler]
+    G --> GDB[(Isolated shadow data role)]
+    A --> ADB[(Selected RDS mirror / shadow role)]
+
+    XGH[Public review repo<br/>main · this repository] --> DEMO[Docker Compose<br/>offline judge demo · no production writes]
+
+    classDef writer fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
+    classDef shadow fill:#fff8e1,stroke:#f9a825,color:#5d4037;
+```
+
+| Environment | Role | Runtime | Data role | Writes / scheduler |
+|---|---|---|---|---|
+| **Vercel** | Production frontend | pantheon-research.com | — | — |
+| **Railway** | Production backend / **canonical writer** | FastAPI + jobs | Canonical PostgreSQL | **Enabled** |
+| **GCP Cloud Run** | Gemini shadow / proof | Scale-to-zero container | Isolated shadow role | Fail-closed OFF |
+| **Alibaba Cloud** | **Qwen shadow / proof** | ECS + Nginx + Dockerized FastAPI | Selected RDS mirror | Fail-closed OFF |
+| **Public judge demo** | Offline review slice (this repo) | Docker Compose | Bundled / local data | No production writes |
+
+> **Non-claims:** exactly one canonical writer — no three production writers, no
+> active-active database, **no automatic cross-cloud failover**, and **no
+> identical full production database clone**. Full detail:
+> [`docs/deployment_architecture.md`](docs/deployment_architecture.md).
+
+---
+
+## 9. Deterministic + Qwen / DeepSeek LLM Overlay
 
 Pantheon draws a strict boundary between **deterministic computation** and **LLM
 interpretation**.
@@ -249,7 +296,7 @@ are **computed, not assumed**:
 
 ---
 
-## 9. Why This Is Not Just an LLM Wrapper
+## 10. Why This Is Not Just an LLM Wrapper
 
 | Capability | Implementation |
 |------------|---------------|
@@ -257,15 +304,14 @@ are **computed, not assumed**:
 | **Evidence hashing** — every pack committed to a `sha256` content hash threaded into each comparison | [`evidence_pack.py`](backend/app/evidence_pack.py) |
 | **Dual-model agreement & divergence** — two independent models, per-field divergence, honest `data_state` | [`comparison.py`](backend/app/comparison.py) |
 | **Human-review gate** — low agreement / major divergence → `human_review_required`; fail-closed → `NOT_COMPARABLE` | [`comparison.py`](backend/app/comparison.py) · [`OverlayComparisonPanel.tsx`](frontend/src/components/equity/OverlayComparisonPanel.tsx) |
-| **Evidence Lineage** — visual proof the LLMs *read* evidence rather than invent it: Evidence Pack → Qwen → DeepSeek → Comparison → Human Review, each step labelled deterministic vs LLM-generated | [`EvidenceLineage.tsx`](frontend/src/components/judge/EvidenceLineage.tsx) |
+| **Evidence Lineage** — Evidence Pack → Qwen → DeepSeek → Comparison → Human Review, each step labelled deterministic vs LLM-generated | [`EvidenceLineage.tsx`](frontend/src/components/judge/EvidenceLineage.tsx) |
 | **Multi-asset scope** — Macro · TA · FICC context grid with per-module `data_state` | [`sample_modules.py`](backend/app/sample_modules.py) · [`ModuleSnapshotGrid.tsx`](frontend/src/components/ModuleSnapshotGrid.tsx) |
 | **Research-Ops governance** — provider config, coverage, per-ticker state | [`data_quality.py`](backend/app/data_quality.py) · [`DataQualityPanel.tsx`](frontend/src/components/DataQualityPanel.tsx) |
-| **Validation methodology** — the overlay is a tracked signal, not an alpha oracle | [docs/validation_methodology.md](docs/validation_methodology.md) |
 | **Live deployment proof** — host-honest proof endpoint + admin-gated live Qwen smoke | [docs/live_proof.md](docs/live_proof.md) |
 
 ---
 
-## 10. Alibaba Cloud + Qwen Integration
+## 11. Alibaba Cloud + Qwen Integration
 
 | Component | Detail |
 |-----------|--------|
@@ -303,16 +349,13 @@ not verify.
 
 On the **live ECS box**, RDS is deployed and connected (`connected: true`). This
 offline demo performs no probe (`connected: null`). **Alibaba RDS is a selected
-evidence mirror, not a full production-database clone** — migration is never
-claimed without core row counts and API read-path verification. See
+evidence mirror, not a full production-database clone.** See
 [docs/alibaba_deployment_parity.md](docs/alibaba_deployment_parity.md).
 
----
+### Production coverage
 
-## 11. Production Coverage
-
-Numbers below describe the **private production** Qwen coverage (reported from the
-bundled [`data/judge_proof_bundle.json`](data/judge_proof_bundle.json)); the
+Numbers below describe the **private production** Qwen coverage (reported from
+the bundled [`data/judge_proof_bundle.json`](data/judge_proof_bundle.json)); the
 public offline demo ships two fully worked tickers (MA, NVDA).
 
 | Metric | Value |
@@ -322,13 +365,59 @@ public offline demo ships two fully worked tickers (MA, NVDA).
 | Healthy comparisons | **312 / 312** |
 | DeepSeek baseline universe | 1,331 |
 
-Full-universe parity was intentionally not pursued for the public demo. Coverage
+Full-universe parity was intentionally not pursued for the public demo; coverage
 prioritizes liquid, judge-relevant equities across US, China, Hong Kong, and
-Singapore; low-liquidity tail coverage remains private / backlog.
+Singapore.
 
 ---
 
-## 12. Demo Flow
+## 12. Qwen-Specific Value for Asia Equity Research
+
+Why Qwen is the **hero model** for this submission — not just "another provider".
+Full write-up: [`docs/qwen_value_for_asia_research.md`](docs/qwen_value_for_asia_research.md).
+
+1. **Hero model for this hackathon.** The runnable live path is Qwen (DashScope)
+   as primary analyst, DeepSeek as baseline; Claude/ChatGPT/Gemini are production
+   context only.
+2. **Built for Asia-oriented equity research.** Production coverage spans US,
+   China (A-share), Hong Kong, and Singapore — Qwen reads Chinese-language
+   filings, exchange announcements, and news natively, without a lossy
+   translation hop, and handles A-share / HK market terminology.
+3. **Not winner-takes-all vs DeepSeek.** The comparison surfaces agreement,
+   divergence, and evidence gaps per field. Divergence is **signal, not noise**,
+   and is routed to a human — not averaged away.
+4. **A conservative analyst that flags over-inference.** Qwen can be the more
+   cautious voice, emitting a structured `missing_evidence` list and a
+   `confidence` score instead of confident-sounding narrative when the governed
+   evidence is thin.
+5. **A credible China / Asia deployment path.** DashScope + Alibaba Cloud ECS is a
+   real, already-integrated deployment, verifiable via the secret-free proof
+   endpoint.
+6. **LLMs remain analysts, not traders.** Qwen and DeepSeek read governed
+   evidence and produce structured opinions; the human remains the portfolio
+   manager.
+
+---
+
+## 13. Evidence Lineage
+
+The Judge Demo page renders an **Evidence Lineage** flow that makes explicit that
+the LLMs *read* governed evidence — they do not invent it, and they do not
+execute trades:
+
+```
+Evidence Pack  →  Qwen Analysis  →  DeepSeek Analysis  →  Comparison  →  Human Review
+ (deterministic)      (LLM)              (LLM)          (deterministic)  (deterministic)
+   sha256 hash                                          agreement/gaps    gate
+```
+
+Each step is labelled **deterministic vs LLM-generated** and flagged if it can
+trigger human review — so a judge can see at a glance that this is not an LLM
+wrapper. Implemented in
+[`EvidenceLineage.tsx`](frontend/src/components/judge/EvidenceLineage.tsx).
+
+<details>
+<summary><b>Demo flow (6 steps) + example comparison output (NVDA, offline sample)</b></summary>
 
 1. **Select ticker** — MA (Mastercard) or NVDA (NVIDIA).
 2. **Load evidence** — backend loads quantitative metrics from `data/` and
@@ -340,9 +429,6 @@ Singapore; low-liquidity tail coverage remains private / backlog.
 
 Each overlay produces: `business_quality`, `moat`, `pricing_power`,
 `capital_allocation`, `red_flags`, `confidence` (0–1), `missing_evidence`.
-
-<details>
-<summary><b>Example comparison output (NVDA, offline sample)</b></summary>
 
 ```json
 {
@@ -359,14 +445,14 @@ Each overlay produces: `business_quality`, `moat`, `pricing_power`,
 }
 ```
 
-`data_state` is the honest headline. When a provider fails closed, the comparison
-is `NOT_COMPARABLE` — **no agreement score is fabricated**.
+When a provider fails closed, the comparison is `NOT_COMPARABLE` — **no
+agreement score is fabricated**.
 
 </details>
 
 ---
 
-## 13. Current Maturity
+## 14. Current Maturity
 
 Status taxonomy: `LIVE` · `BETA` · `INTERNAL` · `STAGED` · `PLANNED`.
 
@@ -374,6 +460,7 @@ Status taxonomy: `LIVE` · `BETA` · `INTERNAL` · `STAGED` · `PLANNED`.
 |---|---|---|
 | Qwen vs DeepSeek equity overlay | **LIVE** | This repo |
 | Offline judge demo (zero secrets) | **LIVE** | This repo |
+| Judge Demo / Qwen Proof cockpit + architecture visuals | **LIVE** | This repo |
 | Alibaba Cloud ECS deployment proof | **LIVE** | Alibaba |
 | Cross-asset web dashboard | LIVE | Production (Web / PWA) |
 | Five-provider Equity cockpit | LIVE (cache) | Production |
@@ -388,7 +475,7 @@ fail-closed behind environment kill-switches.
 
 ---
 
-## 14. API Endpoints
+## 15. API Endpoints
 
 <details>
 <summary><b>Full endpoint reference (23 endpoints)</b></summary>
@@ -427,11 +514,11 @@ fail-closed behind environment kill-switches.
 
 ---
 
-## 15. Tests
+## 16. Tests
 
 ```bash
-cd backend && python -m pytest            # backend tests (incl. judge aggregator)
-cd frontend && npm test -- --run           # frontend tests
+cd backend && python -m pytest            # backend tests (incl. judge aggregator + signal preview)
+cd frontend && npm test -- --run           # frontend tests (incl. Judge Demo page)
 cd frontend && npm run build               # production build
 docker compose config                      # validate compose file
 ./scripts/judge_smoke.sh                   # end-to-end smoke (offline)
@@ -440,12 +527,11 @@ docker compose config                      # validate compose file
 The smoke test exercises the local backend end-to-end (offline, no secrets),
 including `/api/judge/full-demo` and `/api/signal-preview/qwen/{ticker}`, then
 best-effort pings the live Alibaba Cloud proof. Frontend tests cover the Judge
-Demo page's success render, human-review banner, and fail-closed error states
-(`JudgeDemoPage.test.tsx`).
+Demo page's success render, human-review banner, and fail-closed error states.
 
 ---
 
-## 16. Key Files
+## 17. Key Files
 
 | Category | File |
 |----------|------|
@@ -453,47 +539,45 @@ Demo page's success render, human-review banner, and fail-closed error states
 | **Judge Demo Cockpit UI** | [`JudgeDemoPage.tsx`](frontend/src/components/judge/JudgeDemoPage.tsx) — consumes `/api/judge/full-demo`, fail-closed on error |
 | **Evidence Lineage** | [`EvidenceLineage.tsx`](frontend/src/components/judge/EvidenceLineage.tsx) |
 | **Signal Preview** | [`backend/app/signal_preview.py`](backend/app/signal_preview.py) → `GET /api/signal-preview/qwen/{ticker}` · [`SignalBriefPreview.tsx`](frontend/src/components/judge/SignalBriefPreview.tsx) |
+| **Architecture Visuals** | [`docs/assets/pantheon_research_high_level_architecture.png`](docs/assets/pantheon_research_high_level_architecture.png) · [`docs/assets/pantheon_deployment_architecture.svg`](docs/assets/pantheon_deployment_architecture.svg) |
 | **Qwen Value / Roadmap** | [`QwenValueSection.tsx`](frontend/src/components/judge/QwenValueSection.tsx) · [`CommercializationRoadmap.tsx`](frontend/src/components/judge/CommercializationRoadmap.tsx) |
-| **Judge Evidence** | [`docs/judge_evidence.md`](docs/judge_evidence.md) · [`data/judge_proof_bundle.json`](data/judge_proof_bundle.json) |
 | **Alibaba Proof Code** | [`backend/app/alibaba_cloud_proof.py`](backend/app/alibaba_cloud_proof.py) |
 | **Qwen API Call** | [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py) |
 | Comparison Engine | [`backend/app/comparison.py`](backend/app/comparison.py) |
 | Evidence Pack + Hash | [`backend/app/evidence_pack.py`](backend/app/evidence_pack.py) |
-| Product UI | [`frontend/src/components/equity/OverlayComparisonPanel.tsx`](frontend/src/components/equity/OverlayComparisonPanel.tsx) |
-| Data Quality Panel | [`backend/app/data_quality.py`](backend/app/data_quality.py) · [`DataQualityPanel.tsx`](frontend/src/components/DataQualityPanel.tsx) |
-| Provider Health | [`backend/app/provider_health.py`](backend/app/provider_health.py) |
-| Validation Timeline | [`backend/app/validation_timeline.py`](backend/app/validation_timeline.py) |
+| **Deployment Architecture** | [`docs/deployment_architecture.md`](docs/deployment_architecture.md) |
+| **Public/Private Scope** | [`docs/public_private_scope.md`](docs/public_private_scope.md) |
+| **Qwen Asia Value** | [`docs/qwen_value_for_asia_research.md`](docs/qwen_value_for_asia_research.md) |
+| **Commercialization Plan** | [`docs/commercialization_plan.md`](docs/commercialization_plan.md) |
 | Safe Claims & Non-Claims | [docs/safe_claims.md](docs/safe_claims.md) |
-| Production Mapping | [docs/production_architecture_mapping.md](docs/production_architecture_mapping.md) |
-| Judge Walkthrough | [docs/judge_walkthrough.md](docs/judge_walkthrough.md) |
+| Judge Evidence / Walkthrough | [docs/judge_evidence.md](docs/judge_evidence.md) · [docs/judge_walkthrough.md](docs/judge_walkthrough.md) |
 
 ---
 
-## 17. Roadmap & Commercialization
+## 18. Commercialization and Roadmap
 
 Pantheon's path from research operating system to commercial product. The same
-roadmap renders as a **Productization Roadmap** card in the Judge Demo tab —
-phrased throughout as *expected revenue streams*, not existing revenue:
+roadmap renders as a **Productization Roadmap** card in the Judge Demo tab, and
+the full plan is in [`docs/commercialization_plan.md`](docs/commercialization_plan.md)
+— phrased throughout as *expected revenue streams*, not existing revenue.
 
-- **Strategy backtesting** — point-in-time, no-lookahead backtests across the
-  deterministic frameworks.
-- **Forward track record** — mature the tracked-signal ledger into a public,
-  no-lookahead forward record before any performance is characterized.
-- **Go-to-market & commercialization** — grow Pantheon Pro (the existing
-  payment + membership infrastructure) from controlled beta to paid tiers.
-- **API monetization** — expose governed research data and model-comparison
-  outputs as a paid API.
-- **Skills marketplace** — third-party research frameworks and overlays as
-  installable "skills" on the platform.
-- **Paid market data / equity evaluation** — premium, evidence-backed equity and
-  cross-asset evaluation products.
+- **Subscription research platform** — cross-asset dashboard, premium overlays,
+  and signal summaries as tiered subscriptions.
+- **Investment skills marketplace** — packaged frameworks (Macro, Equity, BTC,
+  ETH, DeFi, TA, FX/Commodities) as installable, versioned skills.
+- **Paid equity-evaluation & data APIs** — structured company analysis, evidence
+  packs, LLM comparison, valuation/risk summaries, and quality-labelled data.
+- **B2B / institutional research licensing** — governed research surfaces and
+  model-comparison outputs licensed to desks and platforms.
+- **Strategy backtesting → forward track record** — point-in-time, no-lookahead
+  backtests, matured into a public forward record before any performance claim.
 - **Trading — only after validation** — a staged Trading Gateway (shadow → paper
-  → approval) that stays fail-closed; **any trading profit follows validated
-  track record, and is never claimed today**.
+  → approval) that stays fail-closed; **any trading profit follows a validated
+  track record, and is never claimed today.**
 
 ---
 
-## 18. Safe Claims / Non-Claims
+## 19. Safe Claims / Non-Claims
 
 **Safe claims (defensible & verifiable):**
 
@@ -515,22 +599,24 @@ phrased throughout as *expected revenue streams*, not existing revenue:
   forward validation is required first.
 - **This public repo is not the full production system.**
 - **Alibaba RDS is not a full production-database clone**, and no production-data
-  migration is claimed.
+  migration is claimed; **no automatic cross-cloud failover** and **no three
+  production writers**.
 - **No live five-model paid inference in this public repo** — the runnable live
   path is Qwen + DeepSeek. Claude / ChatGPT / Gemini appear only as *production
   architecture context*.
+- **The Signal Brief Preview never sends a real Telegram message** — no
+  credentials, no external network call; `delivery_state` is always
+  `RESEARCH_ONLY` or `HUMAN_REVIEW_REQUIRED`, never an auto-execute state.
+- **No existing revenue** is claimed — the commercialization plan is expected
+  revenue streams only.
 - **No proprietary internals** (market-data pipelines, scoring models, provider
   routing, production database rows, admin plane) are published here.
-- **The Signal Brief Preview never sends a real Telegram message.** It is a
-  mock, offline render of the delivery layer's shape — no credentials, no
-  external network call, and `delivery_state` is always `RESEARCH_ONLY` or
-  `HUMAN_REVIEW_REQUIRED`, never an auto-execute state.
 
 Full ledger: [docs/safe_claims.md](docs/safe_claims.md).
 
 ---
 
-## 19. Author & License
+## 20. Author & License
 
 **Jacob Zhao** — [0xjacobzhao-byte](https://github.com/0xjacobzhao-byte)
 

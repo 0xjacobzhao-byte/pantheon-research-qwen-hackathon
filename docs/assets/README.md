@@ -4,11 +4,19 @@ Visual and captured-artifact assets for the README and judging docs.
 
 ## Captured (committed)
 
-- **[`architecture_high_level.png`](architecture_high_level.png)** — Pantheon Research
-  high-level architecture diagram showing all 7 layers: external data sources,
-  data platform, strategy engines, deterministic + LLM layer, information layer,
-  signal layer, and trading layer. Includes Alibaba Cloud stack integration and
-  Qwen via DashScope dual-model overlay workflow.
+- **[`pantheon_research_high_level_architecture.png`](pantheon_research_high_level_architecture.png)**
+  — Pantheon Research high-level architecture diagram (external data sources →
+  governed data platform → strategy engines → deterministic + LLM layer →
+  information / signal / trading layers), including the Alibaba Cloud stack and
+  the Qwen-via-DashScope dual-model overlay. This is the canonical, public-safe
+  high-level diagram (byte-identical to the copy published in the public
+  BUIDL_QUESTS repository).
+- **[`pantheon_deployment_architecture.svg`](pantheon_deployment_architecture.svg)**
+  — deployment architecture: one code source, several deployment substrates
+  (Vercel + Railway primary, GCP Gemini shadow, Alibaba Qwen shadow), exactly one
+  canonical writer, the public offline judge demo, and explicit non-claims
+  (no auto-failover, no full RDS clone). Secret-free by construction. Full detail
+  in [`../deployment_architecture.md`](../deployment_architecture.md).
 - **[`alibaba_live_proof.json`](alibaba_live_proof.json)** — a real, unmodified
   capture of the live Alibaba Cloud proof endpoint
   (`GET http://8.222.191.152/api/proof/alibaba-cloud`). Booleans only, no

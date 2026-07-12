@@ -4,6 +4,7 @@ import EvidenceLineage from "./EvidenceLineage";
 import SignalBriefPreview from "./SignalBriefPreview";
 import QwenValueSection from "./QwenValueSection";
 import CommercializationRoadmap from "./CommercializationRoadmap";
+import ArchitectureSection from "./ArchitectureSection";
 
 /**
  * JudgeDemoPage — "Judge Demo / Qwen Proof".
@@ -88,6 +89,12 @@ export default function JudgeDemoPage() {
           schema <code>{demo.schema_version}</code> · {demo.demo_mode} mode · generated{" "}
           <code>{demo.generated_at_utc}</code>
         </p>
+      </section>
+
+      {/* Architecture */}
+      <section className="card">
+        <h2>Architecture</h2>
+        <ArchitectureSection />
       </section>
 
       {/* 1. Alibaba proof */}
