@@ -264,6 +264,7 @@ describe("JudgeDemoPage", () => {
 
     await waitFor(() => expect(screen.getByTestId("judge-demo-page")).toBeInTheDocument());
     expect(screen.getByText("Judge Demo / Qwen Proof")).toBeInTheDocument();
+    expect(screen.getByTestId("architecture-section")).toBeInTheDocument();
     expect(screen.getByText("Alibaba Cloud Proof")).toBeInTheDocument();
     expect(screen.getByText("Qwen / DashScope Integration")).toBeInTheDocument();
     expect(screen.getByTestId("qwen-value-section")).toBeInTheDocument();

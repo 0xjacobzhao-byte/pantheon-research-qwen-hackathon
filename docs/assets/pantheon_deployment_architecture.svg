@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 690" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" role="img" aria-label="Pantheon Research deployment architecture: one code source, several deployment substrates, one canonical production writer, and a separate offline public judge demo.">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- card background (readable in light & dark GitHub themes) -->
+  <rect x="0" y="0" width="980" height="690" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+
+  <text x="490" y="40" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">Pantheon Research — Deployment Architecture</text>
+  <text x="490" y="64" text-anchor="middle" font-size="13" fill="#475569">One code source · several deployment substrates · exactly one canonical production writer</text>
+
+  <!-- ============ SOURCES ============ -->
+  <!-- Private production repo -->
+  <rect x="120" y="92" width="340" height="58" rx="8" fill="#eef2f7" stroke="#64748b" stroke-width="1.5"/>
+  <text x="290" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2937">Private production repo · master</text>
+  <text x="290" y="136" text-anchor="middle" font-size="12" fill="#475569">closed-source code source (judges: read-only on request)</text>
+
+  <!-- Public review repo -->
+  <rect x="560" y="92" width="300" height="58" rx="8" fill="#e3f2fd" stroke="#1e88e5" stroke-width="1.5"/>
+  <text x="710" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="#0d47a1">Public review repo · main (this repo)</text>
+  <text x="710" y="136" text-anchor="middle" font-size="12" fill="#0d47a1">sanitized, offline, judge-runnable slice</text>
+
+  <!-- ============ PRODUCTION SUBSTRATES ============ -->
+  <!-- Vercel -->
+  <rect x="40" y="214" width="180" height="66" rx="8" fill="#eef2f7" stroke="#64748b" stroke-width="1.5"/>
+  <text x="130" y="242" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">Vercel</text>
+  <text x="130" y="262" text-anchor="middle" font-size="11.5" fill="#475569">production frontend</text>
+
+  <!-- Railway (canonical writer) -->
+  <rect x="238" y="214" width="196" height="66" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.5"/>
+  <text x="336" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#1b5e20">Railway · FastAPI</text>
+  <text x="336" y="256" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1b5e20">CANONICAL WRITER</text>
+  <text x="336" y="272" text-anchor="middle" font-size="11" fill="#2e7d32">scheduler / jobs enabled</text>
+
+  <!-- GCP shadow -->
+  <rect x="452" y="214" width="196" height="66" rx="8" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="550" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#5d4037">GCP Cloud Run</text>
+  <text x="550" y="256" text-anchor="middle" font-size="11.5" fill="#5d4037">Gemini shadow / proof</text>
+  <text x="550" y="272" text-anchor="middle" font-size="11" fill="#8d6e63">writes fail-closed OFF</text>
+
+  <!-- Alibaba shadow (Qwen hero) -->
+  <rect x="666" y="214" width="274" height="66" rx="8" fill="#fff8e1" stroke="#ff6a00" stroke-width="3"/>
+  <text x="803" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#7a3b00">Alibaba Cloud · Qwen shadow / proof ★</text>
+  <text x="803" y="256" text-anchor="middle" font-size="11.5" fill="#7a3b00">ECS · Nginx · Docker FastAPI · DashScope (Qwen)</text>
+  <text x="803" y="272" text-anchor="middle" font-size="11" fill="#a0522d">writes fail-closed OFF</text>
+
+  <!-- ============ DATA STORES ============ -->
+  <!-- Canonical PostgreSQL -->
+  <rect x="238" y="356" width="196" height="52" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+  <text x="336" y="380" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1b5e20">Canonical PostgreSQL</text>
+  <text x="336" y="398" text-anchor="middle" font-size="11" fill="#2e7d32">single source of truth</text>
+
+  <!-- GCP shadow data role -->
+  <rect x="452" y="356" width="196" height="52" rx="8" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="550" y="380" text-anchor="middle" font-size="12.5" font-weight="700" fill="#5d4037">Isolated shadow role</text>
+  <text x="550" y="398" text-anchor="middle" font-size="11" fill="#8d6e63">non-canonical</text>
+
+  <!-- Alibaba RDS selected mirror -->
+  <rect x="666" y="356" width="274" height="52" rx="8" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="803" y="380" text-anchor="middle" font-size="12.5" font-weight="700" fill="#5d4037">Alibaba RDS — selected evidence mirror</text>
+  <text x="803" y="398" text-anchor="middle" font-size="11" fill="#8d6e63">partial mirror · NOT a full production clone</text>
+
+  <!-- ============ PUBLIC DEMO LANE ============ -->
+  <line x1="40" y1="452" x2="940" y2="452" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 4"/>
+  <rect x="666" y="474" width="274" height="66" rx="8" fill="#e3f2fd" stroke="#1e88e5" stroke-width="1.5"/>
+  <text x="803" y="500" text-anchor="middle" font-size="13" font-weight="700" fill="#0d47a1">Docker Compose · offline judge demo</text>
+  <text x="803" y="519" text-anchor="middle" font-size="11.5" fill="#0d47a1">bundled samples · no secrets</text>
+  <text x="803" y="534" text-anchor="middle" font-size="11" fill="#1565c0">NO production writes</text>
+
+  <!-- ============ ARROWS ============ -->
+  <!-- private repo -> substrates -->
+  <path d="M240,150 C200,180 150,190 130,212" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M285,150 C300,175 320,190 334,212" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M330,150 C420,180 500,190 545,212" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M370,150 C560,182 700,190 780,212" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Vercel -> Railway (public traffic) -->
+  <path d="M220,250 L236,250" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- substrates -> stores -->
+  <path d="M336,280 L336,354" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M550,280 L550,354" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M803,280 L803,354" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- public repo -> demo -->
+  <path d="M760,150 C800,300 803,420 803,472" fill="none" stroke="#1e88e5" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+
+  <!-- ============ NON-CLAIMS FOOTER ============ -->
+  <rect x="40" y="474" width="590" height="66" rx="8" fill="#fbfdff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="56" y="497" font-size="12.5" font-weight="700" fill="#334155">Explicit non-claims</text>
+  <text x="56" y="516" font-size="11.5" fill="#475569">• Exactly one canonical writer — no three production writers, no active-active DB.</text>
+  <text x="56" y="532" font-size="11.5" fill="#475569">• No automatic cross-cloud failover · No full production-database clone · Shadows never write canonical data.</text>
+
+  <text x="490" y="576" text-anchor="middle" font-size="12" fill="#64748b">GitHub master is the single source of code — the clouds build from the same repository; they do not each hold their own copy.</text>
+  <text x="490" y="596" text-anchor="middle" font-size="11.5" fill="#94a3b8">Secret-free by construction: no tokens, database URLs, or admin credentials appear in this diagram or the public repo.</text>
+
+  <!-- legend -->
+  <rect x="360" y="622" width="16" height="12" rx="2" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="382" y="632" font-size="11" fill="#475569">canonical writer</text>
+  <rect x="486" y="622" width="16" height="12" rx="2" fill="#fff8e1" stroke="#f9a825"/>
+  <text x="508" y="632" font-size="11" fill="#475569">shadow / proof</text>
+  <rect x="606" y="622" width="16" height="12" rx="2" fill="#e3f2fd" stroke="#1e88e5"/>
+  <text x="628" y="632" font-size="11" fill="#475569">public offline demo</text>
+</svg>
