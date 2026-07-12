@@ -342,6 +342,92 @@ footer a:hover { text-decoration: underline; }
 .ph-system { grid-column: 1 / -1; }
 .ph-note { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
 
+/* ---------- Tab nav ---------- */
+.tab-nav { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab-btn {
+  padding: 0.55rem 1.25rem; background: var(--surface); color: var(--text-muted);
+  border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; cursor: pointer;
+}
+.tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tab-btn-judge.active { background: #f59e0b; border-color: #f59e0b; }
+.judge-hero-card { border-color: #f59e0b; border-width: 2px; }
+
+/* ---------- Judge Demo page ---------- */
+.judge-demo-page { display: flex; flex-direction: column; }
+.raw-json {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.75rem; font-size: 0.72rem; overflow-x: auto; max-height: 480px;
+  overflow-y: auto; margin-top: 0.75rem; white-space: pre-wrap; word-break: break-word;
+}
+
+/* ---------- Evidence Lineage ---------- */
+.lineage-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.5rem; }
+.lineage-step-wrap { display: flex; align-items: center; gap: 0.5rem; }
+.lineage-step {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.75rem; min-width: 180px; max-width: 220px; display: flex; flex-direction: column; gap: 0.3rem;
+}
+.lineage-step.lineage-deterministic { border-left: 3px solid var(--accent); }
+.lineage-step.lineage-llm { border-left: 3px solid #f59e0b; }
+.lineage-step h4 { font-size: 0.9rem; margin: 0.15rem 0; }
+.lineage-step-header { display: flex; justify-content: space-between; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.lineage-kind-badge {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem; border-radius: 4px; color: #fff;
+}
+.lineage-kind-deterministic { background: var(--accent); }
+.lineage-kind-llm { background: #f59e0b; }
+.lineage-review-flag { font-size: 0.68rem; color: var(--error); font-weight: 600; }
+.lineage-status { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+.lineage-output { font-size: 0.78rem; color: var(--text); }
+.lineage-hash { font-size: 0.65rem; background: var(--surface2); padding: 0.1rem 0.3rem; border-radius: 4px; align-self: flex-start; }
+.lineage-arrow { color: var(--text-muted); font-size: 1.3rem; font-weight: bold; flex-shrink: 0; }
+@media (max-width: 900px) {
+  .lineage-flow { flex-direction: column; }
+  .lineage-step { max-width: none; width: 100%; }
+  .lineage-arrow { transform: rotate(90deg); align-self: center; }
+}
+
+/* ---------- Qwen value section ---------- */
+.qwen-value-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.85rem; }
+.qwen-value-item {
+  background: var(--bg); border: 1px solid var(--border); border-left: 3px solid #f59e0b;
+  border-radius: 8px; padding: 0.85rem;
+}
+.qwen-value-item h4 { font-size: 0.88rem; margin-bottom: 0.35rem; color: #f59e0b; }
+.qwen-value-item p { font-size: 0.82rem; color: var(--text-muted); }
+
+/* ---------- Signal brief preview ---------- */
+.signal-preview { display: flex; flex-direction: column; gap: 0.75rem; }
+.signal-preview-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.signal-channel { font-size: 0.82rem; color: var(--text-muted); }
+.signal-delivery-badge { color: #0f172a; }
+.telegram-bubble {
+  background: #1c2733; border: 1px solid var(--border); border-radius: 12px;
+  padding: 1rem; max-width: 480px;
+}
+.telegram-message {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; margin: 0; color: var(--text);
+}
+.signal-flags { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.75rem; color: var(--text-muted); }
+.signal-flags strong { color: var(--text); }
+.signal-disclaimer { font-size: 0.85rem; color: var(--warning); font-weight: 600; }
+
+/* ---------- Commercialization roadmap ---------- */
+.commercial-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; margin-bottom: 1rem; }
+.commercial-item {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;
+}
+.commercial-item h4 { font-size: 0.85rem; margin-bottom: 0.35rem; color: var(--accent); }
+.commercial-item p { font-size: 0.8rem; color: var(--text-muted); }
+.commercial-trading-note {
+  background: rgba(180,83,9,0.1); border-left: 3px solid var(--warning);
+  border-radius: 6px; padding: 0.75rem 0.85rem;
+}
+.commercial-trading-note h4 { font-size: 0.85rem; margin-bottom: 0.35rem; }
+.commercial-trading-note p { font-size: 0.8rem; color: var(--text-muted); }
+
 /* ---------- Validation Timeline ---------- */
 .validation-timeline { display: flex; flex-direction: column; gap: 0.75rem; }
 .validation-timeline h3 { margin: 0; }

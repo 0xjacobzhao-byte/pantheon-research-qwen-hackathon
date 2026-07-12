@@ -16,7 +16,8 @@ minutes. **It is not an API wrapper, and it is not the full production system.**
 
 > **Judges — start here:** the [3-Minute Judge Path](#4-3-minute-judge-path)
 > and [`docs/judge_evidence.md`](docs/judge_evidence.md). Or hit one endpoint for
-> everything at once: **`GET /api/judge/full-demo`**.
+> everything at once: **`GET /api/judge/full-demo`** — and see it rendered live
+> in the app's **"Judge Demo / Qwen Proof"** tab, not just as raw JSON.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 ![Backend](https://img.shields.io/badge/backend-FastAPI%20%C2%B7%20Python%203.11--3.12-009688)
@@ -98,20 +99,25 @@ cd pantheon-research-qwen-hackathon
 docker compose up --build          # frontend :5173 · backend :8000
 ```
 
-1. **Everything in one call** — the unified aggregator (read-only, secret-free):
+1. **Open the "Judge Demo / Qwen Proof" tab** at http://localhost:5173 — a
+   product-grade, visual home for the entire judge demo (Alibaba proof, Qwen
+   integration, evidence lineage, signal preview, roadmap, claims ledger).
+   Falls back to a graceful error state, never a blank page, if the backend
+   isn't reachable.
+2. **Or get everything in one call** — the same aggregator, raw:
    ```bash
    curl -s http://localhost:8000/api/judge/full-demo | jq
    ```
-2. **Verify the live Alibaba ECS proof** (production backend, no secrets returned):
+3. **Verify the live Alibaba ECS proof** (production backend, no secrets returned):
    ```bash
    curl -s http://8.222.191.152/api/proof/alibaba-cloud | jq
    ```
-3. **Inspect the actual Qwen / DashScope call** — [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py)
-4. **Run the end-to-end smoke test** (offline):
+4. **Inspect the actual Qwen / DashScope call** — [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py)
+5. **Run the end-to-end smoke test** (offline):
    ```bash
    ./scripts/judge_smoke.sh
    ```
-5. **Read the full evidence guide** — [`docs/judge_evidence.md`](docs/judge_evidence.md)
+6. **Read the full evidence guide** — [`docs/judge_evidence.md`](docs/judge_evidence.md)
 
 ---
 
@@ -156,6 +162,13 @@ verification.**
 - A **context-only multi-asset module grid** (Macro · TA · FICC) showing scope.
 - A **production-feel React + TypeScript UI**, Dockerized, with an offline mode.
 - A **unified judge aggregator** — `GET /api/judge/full-demo`.
+- A visual **"Judge Demo / Qwen Proof" cockpit page** in the frontend — Alibaba
+  proof, Qwen/DeepSeek config, evidence pack, both overlays, comparison, an
+  **Evidence Lineage** flow diagram, a **Signal Brief Preview** (mock,
+  Telegram-style), a **Productization Roadmap**, and the claims ledger — with a
+  fail-closed error state, never a blank page.
+- A **mock Signal Brief Preview** — `GET /api/signal-preview/qwen/{ticker}` —
+  demonstrating the delivery layer offline, with no real Telegram call.
 
 **In the private production system (architecture context, not claimed for this repo):**
 
@@ -244,6 +257,7 @@ are **computed, not assumed**:
 | **Evidence hashing** — every pack committed to a `sha256` content hash threaded into each comparison | [`evidence_pack.py`](backend/app/evidence_pack.py) |
 | **Dual-model agreement & divergence** — two independent models, per-field divergence, honest `data_state` | [`comparison.py`](backend/app/comparison.py) |
 | **Human-review gate** — low agreement / major divergence → `human_review_required`; fail-closed → `NOT_COMPARABLE` | [`comparison.py`](backend/app/comparison.py) · [`OverlayComparisonPanel.tsx`](frontend/src/components/equity/OverlayComparisonPanel.tsx) |
+| **Evidence Lineage** — visual proof the LLMs *read* evidence rather than invent it: Evidence Pack → Qwen → DeepSeek → Comparison → Human Review, each step labelled deterministic vs LLM-generated | [`EvidenceLineage.tsx`](frontend/src/components/judge/EvidenceLineage.tsx) |
 | **Multi-asset scope** — Macro · TA · FICC context grid with per-module `data_state` | [`sample_modules.py`](backend/app/sample_modules.py) · [`ModuleSnapshotGrid.tsx`](frontend/src/components/ModuleSnapshotGrid.tsx) |
 | **Research-Ops governance** — provider config, coverage, per-ticker state | [`data_quality.py`](backend/app/data_quality.py) · [`DataQualityPanel.tsx`](frontend/src/components/DataQualityPanel.tsx) |
 | **Validation methodology** — the overlay is a tracked signal, not an alpha oracle | [docs/validation_methodology.md](docs/validation_methodology.md) |
@@ -377,7 +391,7 @@ fail-closed behind environment kill-switches.
 ## 14. API Endpoints
 
 <details>
-<summary><b>Full endpoint reference (22 endpoints)</b></summary>
+<summary><b>Full endpoint reference (23 endpoints)</b></summary>
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -385,6 +399,7 @@ fail-closed behind environment kill-switches.
 | GET | `/health` | Health check |
 | **Judge** | | |
 | GET | `/api/judge/full-demo` | **Unified aggregator** — whole demo in one read-only, secret-free call |
+| GET | `/api/signal-preview/qwen/{ticker}` | Mock, offline signal brief — no real Telegram send, no credentials |
 | **Core** | | |
 | GET | `/api/project` | Project metadata |
 | GET | `/api/evidence/{ticker}` | Evidence pack + provenance (`sha256` content hash) |
@@ -423,8 +438,10 @@ docker compose config                      # validate compose file
 ```
 
 The smoke test exercises the local backend end-to-end (offline, no secrets),
-including the new `/api/judge/full-demo` aggregator, then best-effort pings the
-live Alibaba Cloud proof.
+including `/api/judge/full-demo` and `/api/signal-preview/qwen/{ticker}`, then
+best-effort pings the live Alibaba Cloud proof. Frontend tests cover the Judge
+Demo page's success render, human-review banner, and fail-closed error states
+(`JudgeDemoPage.test.tsx`).
 
 ---
 
@@ -433,6 +450,10 @@ live Alibaba Cloud proof.
 | Category | File |
 |----------|------|
 | **Unified Judge Demo** | [`backend/app/judge_demo.py`](backend/app/judge_demo.py) → `GET /api/judge/full-demo` |
+| **Judge Demo Cockpit UI** | [`JudgeDemoPage.tsx`](frontend/src/components/judge/JudgeDemoPage.tsx) — consumes `/api/judge/full-demo`, fail-closed on error |
+| **Evidence Lineage** | [`EvidenceLineage.tsx`](frontend/src/components/judge/EvidenceLineage.tsx) |
+| **Signal Preview** | [`backend/app/signal_preview.py`](backend/app/signal_preview.py) → `GET /api/signal-preview/qwen/{ticker}` · [`SignalBriefPreview.tsx`](frontend/src/components/judge/SignalBriefPreview.tsx) |
+| **Qwen Value / Roadmap** | [`QwenValueSection.tsx`](frontend/src/components/judge/QwenValueSection.tsx) · [`CommercializationRoadmap.tsx`](frontend/src/components/judge/CommercializationRoadmap.tsx) |
 | **Judge Evidence** | [`docs/judge_evidence.md`](docs/judge_evidence.md) · [`data/judge_proof_bundle.json`](data/judge_proof_bundle.json) |
 | **Alibaba Proof Code** | [`backend/app/alibaba_cloud_proof.py`](backend/app/alibaba_cloud_proof.py) |
 | **Qwen API Call** | [`backend/app/qwen_overlay.py`](backend/app/qwen_overlay.py) |
@@ -450,7 +471,9 @@ live Alibaba Cloud proof.
 
 ## 17. Roadmap & Commercialization
 
-Pantheon's path from research operating system to commercial product:
+Pantheon's path from research operating system to commercial product. The same
+roadmap renders as a **Productization Roadmap** card in the Judge Demo tab —
+phrased throughout as *expected revenue streams*, not existing revenue:
 
 - **Strategy backtesting** — point-in-time, no-lookahead backtests across the
   deterministic frameworks.
@@ -498,6 +521,10 @@ Pantheon's path from research operating system to commercial product:
   architecture context*.
 - **No proprietary internals** (market-data pipelines, scoring models, provider
   routing, production database rows, admin plane) are published here.
+- **The Signal Brief Preview never sends a real Telegram message.** It is a
+  mock, offline render of the delivery layer's shape — no credentials, no
+  external network call, and `delivery_state` is always `RESEARCH_ONLY` or
+  `HUMAN_REVIEW_REQUIRED`, never an auto-execute state.
 
 Full ledger: [docs/safe_claims.md](docs/safe_claims.md).
 

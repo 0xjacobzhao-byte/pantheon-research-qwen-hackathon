@@ -65,6 +65,11 @@ check "mini ficc"           "$BASE/api/mini/ficc"                    '.data_stat
 check "judge full-demo"     "$BASE/api/judge/full-demo"              '.schema_version'     "judge-full-demo"
 check "judge demo compare"  "$BASE/api/judge/full-demo"              '.comparison.data_state' "."
 check "judge demo claims"   "$BASE/api/judge/full-demo"              '.non_claims[0]'      "."
+check "judge demo signal"   "$BASE/api/judge/full-demo"              '.signal_preview.delivery_state' "."
+
+check "signal preview"      "$BASE/api/signal-preview/qwen/$TICKER"  '.schema_version'     "signal-preview"
+check "signal not-auto"     "$BASE/api/signal-preview/qwen/$TICKER"  '.real_telegram_call' "false"
+check "signal no-creds"     "$BASE/api/signal-preview/qwen/$TICKER"  '.credentials_used'   "false"
 
 echo
 echo "== Live Alibaba Cloud ECS proof @ $ALIBABA (best-effort; production backend) =="
