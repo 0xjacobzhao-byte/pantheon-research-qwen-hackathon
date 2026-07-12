@@ -23,6 +23,7 @@ from app.ticker_profile import load_ticker_profile, list_profile_tickers
 from app.validation_timeline import get_validation_timeline
 from app.mini_panels import get_macro_mini_panel, get_market_pulse_mini_panel, get_ficc_mini_panel
 from app.judge_demo import get_full_demo
+from app.signal_preview import get_signal_preview
 
 load_dotenv()
 
@@ -295,3 +296,21 @@ async def judge_full_demo():
     external call is made regardless of DEMO_MODE or credential state.
     """
     return get_full_demo()
+
+
+# ---------------------------------------------------------------------------
+# Signal preview (mock, offline, no real Telegram call)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/signal-preview/qwen/{ticker}")
+async def signal_preview(ticker: str):
+    """Mock, offline signal brief preview — no real Telegram send, no secrets.
+
+    Built from the same bundled dual-model comparison as the rest of the
+    public demo. ``delivery_state`` is always RESEARCH_ONLY or
+    HUMAN_REVIEW_REQUIRED; there is no auto-execute state.
+    """
+    try:
+        return get_signal_preview(ticker)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"No evidence data for ticker: {ticker}")

@@ -35,6 +35,7 @@ from .provider_health import get_provider_health
 from .qwen_overlay import _load_sample_overlay as _load_qwen_sample
 from .deepseek_overlay import _load_sample_overlay as _load_deepseek_sample
 from .sample_loader import DATA_DIR, list_available_tickers, load_evidence
+from .signal_preview import get_signal_preview
 from .validation_timeline import get_validation_timeline
 
 # NVDA is the featured ticker: its bundled sample deliberately shows LOW
@@ -139,8 +140,9 @@ def get_full_demo() -> Dict[str, Any]:
         "one_line": (
             "One read-only, secret-free request aggregating the entire public "
             "judge demo: project, Alibaba proof, Qwen/DeepSeek config, evidence "
-            "pack, both overlay statuses, dual-model comparison, data quality, "
-            "provider health, validation timeline, coverage, and the claims ledger."
+            "pack, both overlay statuses, dual-model comparison, a mock signal "
+            "brief preview, data quality, provider health, validation timeline, "
+            "coverage, and the claims ledger."
         ),
         "project": {
             "name": project.name,
@@ -192,6 +194,7 @@ def get_full_demo() -> Dict[str, Any]:
             "human_review_required": comparison.human_review_required,
             "human_review_reason": comparison.human_review_reason,
         },
+        "signal_preview": get_signal_preview(ticker),
         "data_quality": get_data_quality_report(),
         "provider_health": get_provider_health(),
         "validation_timeline": get_validation_timeline(),

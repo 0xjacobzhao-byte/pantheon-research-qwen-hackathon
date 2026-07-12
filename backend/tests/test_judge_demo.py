@@ -24,6 +24,7 @@ TOP_LEVEL_KEYS = {
     "qwen_overlay_status",
     "deepseek_overlay_status",
     "comparison",
+    "signal_preview",
     "data_quality",
     "provider_health",
     "validation_timeline",
@@ -66,6 +67,18 @@ def test_both_overlay_statuses_present():
     assert demo["deepseek_overlay_status"]["provider"] == "deepseek"
     for side in ("qwen_overlay_status", "deepseek_overlay_status"):
         assert demo[side]["status"], f"{side} missing status"
+
+
+def test_signal_preview_is_research_only_and_offline():
+    demo = get_full_demo()
+    preview = demo["signal_preview"]
+    assert preview["ticker"] == demo["featured_ticker"]
+    assert preview["delivery_state"] in ("RESEARCH_ONLY", "HUMAN_REVIEW_REQUIRED")
+    assert preview["real_telegram_call"] is False
+    assert preview["credentials_used"] is False
+    assert preview["external_network_call"] is False
+    assert "not an automatic trade" in preview["disclaimer"].lower()
+    assert preview["evidence_hash"].startswith("sha256:")
 
 
 def test_claims_ledger_is_populated():

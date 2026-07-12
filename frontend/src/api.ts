@@ -410,3 +410,171 @@ export const fetchMarketPulseMini = () =>
   getJson<MarketPulseMiniPanelData>("/mini/market-pulse");
 export const fetchFiccMini = () =>
   getJson<FiccMiniPanelData>("/mini/ficc");
+
+// ---------------------------------------------------------------------------
+// Signal Preview (mock, offline — no real Telegram call)
+// ---------------------------------------------------------------------------
+
+export interface SignalDivergence {
+  field: string;
+  severity: string;
+}
+
+export interface SignalPreview {
+  schema_version: string;
+  generated_at_utc: string;
+  ticker: string;
+  company_name: string;
+  source: string;
+  evidence_hash: string;
+  agreement_score: number | null;
+  agreement_level: string;
+  qwen_tone: string;
+  deepseek_tone: string;
+  major_divergences: SignalDivergence[];
+  evidence_gaps: string[];
+  human_review_required: boolean;
+  human_review_reason: string | null;
+  delivery_state: string;
+  message_preview: string;
+  disclaimer: string;
+  channel: string;
+  real_telegram_call: boolean;
+  credentials_used: boolean;
+  external_network_call: boolean;
+}
+
+export const fetchSignalPreview = (ticker: string) =>
+  getJson<SignalPreview>(`/signal-preview/qwen/${ticker}`);
+
+// ---------------------------------------------------------------------------
+// Judge Full Demo — unified aggregator (GET /api/judge/full-demo)
+// ---------------------------------------------------------------------------
+
+export interface JudgeProjectInfo {
+  name: string;
+  description: string;
+  author: string;
+  github: string;
+  license: string;
+  version: string;
+  architecture_layers: string[];
+  safety_statement: string;
+}
+
+export interface JudgeSubmissionLinks {
+  live_product: string;
+  alibaba_deployment: string;
+  deployment_proof_endpoint: string | null;
+  public_repo: string;
+  private_repo: string | null;
+}
+
+export interface JudgeAlibabaDatabase {
+  role: string;
+  mirror_state: string;
+  connected: boolean | null;
+  production_data_migrated: boolean;
+  full_production_clone_verified: boolean;
+}
+
+export interface JudgeAlibabaProof {
+  cloud_provider: string;
+  host_runtime: string;
+  alibaba_hosted: boolean;
+  region: string;
+  qwen_provider: string;
+  qwen_configured: boolean;
+  demo_mode: string;
+  proof_endpoint: string;
+  live_proof_url: string | null;
+  database: JudgeAlibabaDatabase;
+  attestation: {
+    proof_endpoint_external_calls: boolean;
+    credential_values_returned: boolean;
+  };
+}
+
+export interface JudgeQwenConfig {
+  provider: string;
+  base_url: string;
+  model: string;
+  integration_type: string;
+  prompt_version: string;
+  output_schema_version: string;
+  credential_configured: boolean;
+  demo_mode: string;
+}
+
+export interface JudgeDeepseekConfig {
+  provider: string;
+  model: string;
+  credential_configured: boolean;
+  role: string;
+}
+
+export interface JudgeOverlayStatus {
+  provider: string;
+  model: string;
+  status: string;
+  usable: boolean;
+  confidence: number | null;
+  takeaway: string;
+  error_message: string | null;
+}
+
+export interface JudgeComparison {
+  ticker: string;
+  data_state: string;
+  agreement_score: number | null;
+  agreement_level: string;
+  qwen_tone: string;
+  deepseek_tone: string;
+  divergences: Divergence[];
+  evidence_gaps: string[];
+  human_review_required: boolean;
+  human_review_reason: string | null;
+}
+
+export interface JudgeProductionCoverage {
+  qwen_comparison_capable: number | null;
+  qwen_healthy_comparisons: number | null;
+  qwen_market_split: Record<string, number> | null;
+  deepseek_baseline_universe: number | null;
+  note: string;
+}
+
+export interface JudgeVerification {
+  one_command_smoke: string;
+  live_alibaba_proof: string;
+  evidence_doc: string;
+  safe_claims_doc: string;
+}
+
+export interface JudgeFullDemo {
+  schema_version: string;
+  generated_at_utc: string;
+  demo_mode: string;
+  one_line: string;
+  project: JudgeProjectInfo;
+  submission_links: JudgeSubmissionLinks;
+  alibaba_proof: JudgeAlibabaProof;
+  qwen_config: JudgeQwenConfig;
+  deepseek_config: JudgeDeepseekConfig;
+  featured_ticker: string;
+  evidence_pack: EvidencePack;
+  qwen_overlay_status: JudgeOverlayStatus;
+  deepseek_overlay_status: JudgeOverlayStatus;
+  comparison: JudgeComparison;
+  signal_preview: SignalPreview;
+  data_quality: DataQualityReport;
+  provider_health: ProviderHealthData;
+  validation_timeline: ValidationTimelineData;
+  production_coverage: JudgeProductionCoverage;
+  safe_claims: string[];
+  non_claims: string[];
+  verification: JudgeVerification;
+  note: string;
+}
+
+export const fetchJudgeFullDemo = () => getJson<JudgeFullDemo>("/judge/full-demo");

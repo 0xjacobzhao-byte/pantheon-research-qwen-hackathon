@@ -36,10 +36,14 @@ import ValidationTimeline from "./components/ValidationTimeline";
 import MacroMiniPanel from "./components/MacroMiniPanel";
 import MarketPulseMiniPanel from "./components/MarketPulseMiniPanel";
 import FiccMiniPanel from "./components/FiccMiniPanel";
+import JudgeDemoPage from "./components/judge/JudgeDemoPage";
 
 const TICKERS = ["MA", "NVDA"];
 
+type Tab = "demo" | "judge";
+
 function App() {
+  const [tab, setTab] = useState<Tab>("demo");
   const [project, setProject] = useState<ProjectInfo | null>(null);
   const [demoFlow, setDemoFlow] = useState<DemoFlow | null>(null);
   const [proof, setProof] = useState<AlibabaCloudProof | null>(null);
@@ -107,6 +111,26 @@ function App() {
         )}
       </header>
 
+      <nav className="tab-nav" data-testid="tab-nav">
+        <button
+          className={`tab-btn ${tab === "demo" ? "active" : ""}`}
+          onClick={() => setTab("demo")}
+        >
+          Main Demo
+        </button>
+        <button
+          className={`tab-btn tab-btn-judge ${tab === "judge" ? "active" : ""}`}
+          onClick={() => setTab("judge")}
+          data-testid="tab-judge-demo"
+        >
+          Judge Demo / Qwen Proof
+        </button>
+      </nav>
+
+      {tab === "judge" && <JudgeDemoPage />}
+
+      {tab === "demo" && (
+        <>
       {/* Four-layer architecture */}
       <section className="card">
         <h2>Four-Layer Architecture</h2>
@@ -359,6 +383,8 @@ function App() {
           <h2>Qwen vs DeepSeek — Overlay Comparison</h2>
           <OverlayComparisonPanel comparison={comparison} />
         </section>
+      )}
+        </>
       )}
 
       {/* Safety statement */}
