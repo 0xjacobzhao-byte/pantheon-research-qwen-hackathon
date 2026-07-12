@@ -22,6 +22,7 @@ from app.provider_health import get_provider_health
 from app.ticker_profile import load_ticker_profile, list_profile_tickers
 from app.validation_timeline import get_validation_timeline
 from app.mini_panels import get_macro_mini_panel, get_market_pulse_mini_panel, get_ficc_mini_panel
+from app.judge_demo import get_full_demo
 
 load_dotenv()
 
@@ -280,3 +281,17 @@ async def mini_market_pulse():
 async def mini_ficc():
     """FICC mini panel (context-only, no position)."""
     return get_ficc_mini_panel()
+
+
+# ---------------------------------------------------------------------------
+# Unified judge demo aggregator
+# ---------------------------------------------------------------------------
+
+@app.get("/api/judge/full-demo")
+async def judge_full_demo():
+    """One read-only, secret-free payload aggregating the whole public demo.
+
+    Offline by construction: overlays are read from bundled samples, so no
+    external call is made regardless of DEMO_MODE or credential state.
+    """
+    return get_full_demo()
